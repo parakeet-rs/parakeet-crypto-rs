@@ -1,5 +1,5 @@
 pub mod interfaces;
-mod tencent;
+pub mod tencent;
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right

@@ -8,15 +8,13 @@ pub struct QMC2 {
 
 impl Decryptor for QMC2 {
     fn check(&self, from: &mut dyn SeekReadable) -> Result<bool, DecryptorError> {
-        self.parser.parse(from);
-
-        Ok(true)
+        self.parser.parse(from).and(Ok(true))
     }
 
     fn decrypt(
         &self,
-        from: &mut dyn SeekReadable,
-        to: &mut dyn Write,
+        _from: &mut dyn SeekReadable,
+        _to: &mut dyn Write,
     ) -> Result<(), DecryptorError> {
         Ok(())
     }

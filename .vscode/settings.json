@@ -1,6 +1,7 @@
 {
     "rust-analyzer.checkOnSave.command": "clippy",
     "cSpell.words": [
+        "byteorder",
         "Decryptor"
     ]
 }
