@@ -2,6 +2,8 @@ use std::ops::Rem;
 
 use super::rc4::rc4_init;
 
+/// A strange variation of RC4 implementation used in QMC2.
+/// QMC2 所使用的一种「魔改」RC4 实现。
 #[derive(Clone)]
 pub struct RC4QMC2 {
     state: Vec<u8>,

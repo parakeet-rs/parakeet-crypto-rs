@@ -9,6 +9,9 @@ const MAGIC_ANDROID_S_TAG: u32 = u32::from_le_bytes(*b"STag");
 const MAGIC_ANDROID_Q_TAG: u32 = u32::from_le_bytes(*b"QTag");
 const ENC_V2_PREFIX_TAG: &[u8] = b"QQMusic EncV2,Key:";
 
+/// QMC2's file footer parser.
+/// This parser is used to extract the file key for decryption, as well as the
+///   number of bytes to ignore in the end of the file.
 pub struct QMCFooterParser {
     seed: u8,
     enc_v2_key_stage1: [u8; 16],

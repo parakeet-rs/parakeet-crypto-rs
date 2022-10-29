@@ -2,6 +2,7 @@ use super::qmc_footer_parser::QMCFooterParser;
 use crate::interfaces::decryptor::{Decryptor, DecryptorError, SeekReadable};
 use std::io::Write;
 
+/// QMC2 decryptor for
 pub struct QMC2 {
     parser: QMCFooterParser,
 }

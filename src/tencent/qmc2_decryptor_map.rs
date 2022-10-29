@@ -2,6 +2,8 @@ use std::io::{SeekFrom, Write};
 
 use crate::interfaces::decryptor::{DecryptorError, SeekReadable};
 
+/// QMC2-Map decryption.
+/// TODO: Move this to another file as it can be made generic for older QMC1 variant.
 struct QMC2Map<'a> {
     key: &'a [u8],
     table: [u8; 0x8000],
@@ -32,8 +34,10 @@ impl QMC2Map<'_> {
         QMC2Map { key, table }
     }
 
+    /// Get the mask (used for XOR) for a given offset.
+    /// The offset needs to be smaller than the table size.
     #[inline]
-    fn get_xor_value(&self, offset: usize) -> u8 {
+    fn get_mask_for_offset(&self, offset: usize) -> u8 {
         unsafe {
             // This struct's methods are private and not exposed.
             // Caller are ensuring that the offset is within the size of the table.
@@ -62,7 +66,7 @@ impl QMC2Map<'_> {
     #[inline]
     fn decrypt_block(&self, block: &mut [u8], offset: usize) {
         for (i, value) in block.iter_mut().enumerate() {
-            *value ^= self.get_xor_value(i + offset);
+            *value ^= self.get_mask_for_offset(i + offset);
         }
     }
 }

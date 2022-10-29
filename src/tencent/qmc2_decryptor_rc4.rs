@@ -10,6 +10,12 @@ use super::key_utils::{calculate_key_hash, get_segment_key};
 const FIRST_SEGMENT_SIZE: usize = 0x0080;
 const OTHER_SEGMENT_SIZE: usize = 0x1400;
 
+/// QMC2's RC4 decryption implementation.
+/// The file is split into segments:
+///   - The first segment (0x80 bytes)
+///   - The second segment (0x1400-0x80 bytes, segment_id = 0),
+///     where the first 0x80 bytes were discarded.
+///   - Rest of the segments (each 0x1400 bytes, segment_id = 1, 2, 3, ...)
 struct QMC2RC4 {
     rc4: RC4QMC2,
     key: Box<[u8]>,
