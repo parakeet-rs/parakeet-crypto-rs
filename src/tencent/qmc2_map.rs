@@ -10,15 +10,23 @@ struct QMC2Map<'a> {
 impl QMC2Map<'_> {
     fn new(key: &[u8]) -> QMC2Map {
         // Derive cache table from key.
-        let key_len = key.len() as u32;
+        let key_size = key.len();
         let mut table = [0u8; 0x8000];
 
-        for (i, v) in table.iter_mut().enumerate() {
-            let offset = i as u32;
-            *v = offset
-                .wrapping_mul(offset)
-                .wrapping_add(71214)
-                .wrapping_rem(key_len) as u8;
+        // (i * i + n) % m === ((i % m) * (i % m) + n) % m
+        // table size from 0x7fff => key_size
+        let mut small_table = vec![0u8; key_size].into_boxed_slice();
+        let key_size = key_size as u32;
+        for (i, item) in small_table.iter_mut().enumerate() {
+            let i = i as u32;
+            *item = ((i * i + 71214) % key_size) as u8;
+        }
+
+        // Populate the table
+        let small_table_len = small_table.len();
+        table[..small_table_len].copy_from_slice(&small_table);
+        for (prev_index, i) in (small_table_len..table.len()).enumerate() {
+            table[i] = table[prev_index];
         }
 
         QMC2Map { key, table }
@@ -26,8 +34,25 @@ impl QMC2Map<'_> {
 
     #[inline]
     fn get_xor_value(&self, offset: usize) -> u8 {
+        unsafe {
+            // This struct's methods are private and not exposed.
+            // Caller are ensuring that the offset is within the size of the table.
+            if offset >= self.table.len() {
+                std::hint::unreachable_unchecked()
+            }
+        }
+
         let key = self.table[offset];
-        let xor_key = self.key[key as usize];
+        let key_index = key as usize;
+
+        unsafe {
+            // values of key_index are always within the range during generation.
+            if key_index >= self.key.len() {
+                std::hint::unreachable_unchecked()
+            }
+        }
+
+        let xor_key = self.key[key_index];
         let rotation = ((key & 0b0111) + 4) % 8;
         (xor_key << rotation) | (xor_key >> rotation)
     }
@@ -36,11 +61,6 @@ impl QMC2Map<'_> {
     /// `offset` is the offset of the block (0~0x7fff)
     #[inline]
     fn decrypt_block(&self, block: &mut [u8], offset: usize) {
-        debug_assert!(
-            block.len() <= self.table.len(),
-            "block size should not exceed table size"
-        );
-
         for (i, value) in block.iter_mut().enumerate() {
             *value ^= self.get_xor_value(i + offset);
         }
