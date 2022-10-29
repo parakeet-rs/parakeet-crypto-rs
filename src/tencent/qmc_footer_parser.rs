@@ -16,7 +16,15 @@ pub struct QMCFooterParser {
 }
 
 impl QMCFooterParser {
-    pub fn new(
+    pub fn new(seed: u8) -> QMCFooterParser {
+        QMCFooterParser {
+            seed,
+            enc_v2_key_stage1: [0u8; 16],
+            enc_v2_key_stage2: [0u8; 16],
+        }
+    }
+
+    pub fn new_enc_v2(
         seed: u8,
         enc_v2_key_stage1: [u8; 16],
         enc_v2_key_stage2: [u8; 16],
@@ -130,10 +138,6 @@ mod tests {
         31, 32, 33, 34, 35, 36, 37, 38, 41, 42, 43, 44, 45, 46, 47, 48,
     ];
 
-    fn create_default_parser() -> QMCFooterParser {
-        QMCFooterParser::new(TEST_KEY_SEED, *TEST_KEY_STAGE1, *TEST_KEY_STAGE2)
-    }
-
     fn create_default_key_v1() -> Box<[u8]> {
         let (header, body) = b"12345678Some Key".split_at(8);
 
@@ -164,7 +168,7 @@ mod tests {
 
     #[test]
     fn parse_v1_pc() {
-        let parser = create_default_parser();
+        let parser = QMCFooterParser::new(TEST_KEY_SEED);
         let mut footer = create_default_key_v1().to_vec();
         let mut footer_len = (footer.len() as u32).to_le_bytes().to_vec();
         footer.append(&mut footer_len);
@@ -179,7 +183,7 @@ mod tests {
 
     #[test]
     fn parse_v2_pc() {
-        let parser = create_default_parser();
+        let parser = QMCFooterParser::new_enc_v2(TEST_KEY_SEED, *TEST_KEY_STAGE1, *TEST_KEY_STAGE2);
         let mut footer = create_default_key_v2().to_vec();
         let mut footer_len = (footer.len() as u32).to_le_bytes().to_vec();
         footer.append(&mut footer_len);
@@ -194,7 +198,7 @@ mod tests {
 
     #[test]
     fn parse_v2_q_tag() {
-        let parser = create_default_parser();
+        let parser = QMCFooterParser::new_enc_v2(TEST_KEY_SEED, *TEST_KEY_STAGE1, *TEST_KEY_STAGE2);
         let mut footer = create_default_key_v2().to_vec();
         let mut tmp = Vec::from(b",12345,2" as &[u8]);
         footer.append(&mut tmp);
@@ -213,7 +217,7 @@ mod tests {
 
     #[test]
     fn parse_non_sense() {
-        let parser = create_default_parser();
+        let parser = QMCFooterParser::new(0);
         let footer = vec![0xff, 0xff, 0xff, 0xff];
         let mut stream = Cursor::new(footer);
         assert!(
@@ -224,7 +228,7 @@ mod tests {
 
     #[test]
     fn parse_android_s_tag() {
-        let parser = create_default_parser();
+        let parser = QMCFooterParser::new(0);
         let footer = b"1111STag".to_vec();
         let mut stream = Cursor::new(footer);
         assert_eq!(
