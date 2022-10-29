@@ -36,7 +36,10 @@ impl QMCFooterParser {
         }
     }
 
-    pub fn parse(&self, input: &mut dyn SeekReadable) -> Result<Box<[u8]>, DecryptorError> {
+    pub fn parse(
+        &self,
+        input: &mut dyn SeekReadable,
+    ) -> Result<(usize, Box<[u8]>), DecryptorError> {
         input
             .seek(SeekFrom::End(-4))
             .or(Err(DecryptorError::IOError))?;
@@ -45,7 +48,7 @@ impl QMCFooterParser {
             .read_u32::<LittleEndian>()
             .or(Err(DecryptorError::IOError))?;
 
-        let embed_key = match magic {
+        let (trim_right, embed_key) = match magic {
             MAGIC_ANDROID_S_TAG => return Err(DecryptorError::QMCAndroidSTag),
             MAGIC_ANDROID_Q_TAG => {
                 input
@@ -55,6 +58,8 @@ impl QMCFooterParser {
                 let meta_size = input
                     .read_u32::<BigEndian>()
                     .or(Err(DecryptorError::IOError))?;
+
+                let trim_right = meta_size as usize + 8;
 
                 let mut buffer = vec![0u8; meta_size as usize];
                 input
@@ -71,19 +76,21 @@ impl QMCFooterParser {
 
                 buffer.truncate(embed_key_size);
 
-                buffer
+                (trim_right, buffer)
             }
             0..=0x400 => {
                 input
                     .seek(SeekFrom::End(-4 - (magic as i64)))
                     .or(Err(DecryptorError::IOError))?;
 
+                let trim_right = magic as usize + 4;
+
                 let mut buffer = vec![0u8; magic as usize];
                 input
                     .read_exact(&mut buffer)
                     .or(Err(DecryptorError::IOError))?;
 
-                buffer
+                (trim_right, buffer)
             }
             _ => return Err(DecryptorError::QMCInvalidFooter(magic)),
         };
@@ -96,6 +103,7 @@ impl QMCFooterParser {
         } else {
             self.decrypt_key_v1(&embed_key)
         }
+        .map(|r| (trim_right, r))
     }
 
     fn decrypt_key_v1(&self, embed_key: &[u8]) -> Result<Box<[u8]>, DecryptorError> {
@@ -173,12 +181,12 @@ mod tests {
         let mut footer_len = (footer.len() as u32).to_le_bytes().to_vec();
         footer.append(&mut footer_len);
 
+        let expected_trim_right = footer.len();
         let mut stream = Cursor::new(footer);
 
-        assert_eq!(
-            parser.parse(&mut stream).unwrap().to_vec(),
-            b"12345678Some Key".to_vec()
-        );
+        let (trim_right, decrypted) = parser.parse(&mut stream).unwrap();
+        assert_eq!(trim_right, expected_trim_right);
+        assert_eq!(decrypted.to_vec(), b"12345678Some Key".to_vec());
     }
 
     #[test]
@@ -188,12 +196,12 @@ mod tests {
         let mut footer_len = (footer.len() as u32).to_le_bytes().to_vec();
         footer.append(&mut footer_len);
 
+        let expected_trim_right = footer.len();
         let mut stream = Cursor::new(footer);
 
-        assert_eq!(
-            parser.parse(&mut stream).unwrap().to_vec(),
-            b"12345678Some Key".to_vec()
-        );
+        let (trim_right, decrypted) = parser.parse(&mut stream).unwrap();
+        assert_eq!(trim_right, expected_trim_right);
+        assert_eq!(decrypted.to_vec(), b"12345678Some Key".to_vec());
     }
 
     #[test]
@@ -207,12 +215,12 @@ mod tests {
         let mut tmp = Vec::from(b"QTag" as &[u8]);
         footer.append(&mut tmp);
 
+        let expected_trim_right = footer.len();
         let mut stream = Cursor::new(footer);
 
-        assert_eq!(
-            parser.parse(&mut stream).unwrap().to_vec(),
-            b"12345678Some Key".to_vec()
-        );
+        let (trim_right, decrypted) = parser.parse(&mut stream).unwrap();
+        assert_eq!(trim_right, expected_trim_right);
+        assert_eq!(decrypted.to_vec(), b"12345678Some Key".to_vec());
     }
 
     #[test]
