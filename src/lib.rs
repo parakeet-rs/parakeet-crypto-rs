@@ -1,6 +1,8 @@
 pub mod interfaces;
 pub mod tencent;
 
+pub(crate) mod utils;
+
 pub fn add(left: usize, right: usize) -> usize {
     left + right
 }

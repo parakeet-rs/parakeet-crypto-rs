@@ -3,7 +3,7 @@ use byteorder::{BigEndian, LittleEndian, ReadBytesExt};
 use std::io::SeekFrom;
 use std::str;
 
-use super::qmc_make_key::make_key;
+use super::key_utils::make_key;
 
 const MAGIC_ANDROID_S_TAG: u32 = u32::from_le_bytes(*b"STag");
 const MAGIC_ANDROID_Q_TAG: u32 = u32::from_le_bytes(*b"QTag");
