@@ -77,12 +77,10 @@ pub fn decrypt_map(
     let mut buffer = [0u8; 0x7FFF];
     decrypt_block!(buffer);
 
-    if bytes_left > 0 {
-        // Decrypt rest of the blocks
-        let mut buffer = [0u8; 0x7FFE];
-        while bytes_left > 0 {
-            decrypt_block!(buffer);
-        }
+    // Decrypt rest of the blocks
+    let mut buffer = [0u8; 0x7FFE];
+    while bytes_left > 0 {
+        decrypt_block!(buffer);
     }
 
     Ok(())
