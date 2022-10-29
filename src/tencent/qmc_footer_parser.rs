@@ -96,6 +96,7 @@ impl QMCFooterParser {
         };
 
         let embed_key = str::from_utf8(&embed_key).or(Err(DecryptorError::StringEncodeError))?;
+        let embed_key = embed_key.trim_end_matches(char::from(0));
         let embed_key = base64::decode(embed_key).map_err(DecryptorError::Base64DecodeError)?;
 
         if embed_key.starts_with(ENC_V2_PREFIX_TAG) {
