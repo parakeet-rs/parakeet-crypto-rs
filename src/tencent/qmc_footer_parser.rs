@@ -36,6 +36,18 @@ impl QMCFooterParser {
         }
     }
 
+    pub fn set_seed(&mut self, seed: u8) {
+        self.seed = seed;
+    }
+
+    pub fn set_key_stage1(&mut self, key: [u8; 16]) {
+        self.enc_v2_key_stage1 = key;
+    }
+
+    pub fn set_key_stage2(&mut self, key: [u8; 16]) {
+        self.enc_v2_key_stage2 = key;
+    }
+
     pub fn parse(
         &self,
         input: &mut dyn SeekReadable,
