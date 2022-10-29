@@ -25,7 +25,7 @@ impl Decryptor for QMC2 {
         let (trim_right, embed_key) = self.parser.parse(from)?;
 
         if embed_key.len() <= 300 {
-            super::qmc2_map::decrypt_map(&embed_key, trim_right, from, to)
+            super::qmc2_decryptor_map::decrypt_map(&embed_key, trim_right, from, to)
         } else {
             super::qmc2_decryptor_rc4::decrypt_rc4(&embed_key, trim_right, from, to)
         }
