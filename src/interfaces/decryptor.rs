@@ -7,6 +7,8 @@ impl SeekReadable for std::fs::File {}
 impl SeekReadable for std::io::Cursor<Vec<u8>> {}
 impl SeekReadable for std::io::Cursor<&[u8]> {}
 
+// FIXME: better handling error messages.
+//   e.g. https://boats.gitlab.io/failure/
 #[derive(Debug, PartialEq, Eq)]
 pub enum DecryptorError {
     IOError,
