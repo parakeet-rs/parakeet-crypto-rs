@@ -7,7 +7,7 @@ impl SeekReadable for std::fs::File {}
 impl SeekReadable for std::io::Cursor<Vec<u8>> {}
 impl SeekReadable for std::io::Cursor<&[u8]> {}
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum DecryptorError {
     IOError,
     NotImplementedError(String),
