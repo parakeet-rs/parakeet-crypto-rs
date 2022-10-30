@@ -1,4 +1,7 @@
 {
+    "files.associations": {
+        "LICENSE-*": "plaintext"
+    },
     "rust-analyzer.checkOnSave.command": "clippy",
     "cSpell.words": [
         "byteorder",
