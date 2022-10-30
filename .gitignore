@@ -19,3 +19,9 @@ Cargo.lock
 
 venv/
 *.local
+
+# Decryption key files
+*.bin
+/*.ogg
+*.flac
+*.mp3
