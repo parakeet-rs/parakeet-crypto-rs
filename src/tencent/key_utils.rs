@@ -39,3 +39,15 @@ pub fn get_segment_key(key_hash: u64, id: u64, seed: u64) -> usize {
         100u64.wrapping_mul(key_hash).div(seed.wrapping_mul(id + 1)) as usize
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_simple_key() {
+        let expected: &[u8] = b"\x33\x41\x50\x62\x78\x94\xba\xf1";
+        let key = make_simple_key(123, 8);
+        assert_eq!(&key[..], expected)
+    }
+}
