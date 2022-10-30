@@ -3,7 +3,7 @@ use byteorder::{BigEndian, LittleEndian, ReadBytesExt};
 use std::io::SeekFrom;
 use std::str;
 
-use super::key_utils::make_key;
+use super::key_utils::make_simple_key;
 
 const MAGIC_ANDROID_S_TAG: u32 = u32::from_le_bytes(*b"STag");
 const MAGIC_ANDROID_Q_TAG: u32 = u32::from_le_bytes(*b"QTag");
@@ -124,7 +124,7 @@ impl QMCFooterParser {
 
     fn decrypt_key_v1(&self, embed_key: &[u8]) -> Result<Box<[u8]>, DecryptorError> {
         let (header, body) = embed_key.split_at(8);
-        let simple_key = make_key(self.seed, 8);
+        let simple_key = make_simple_key(self.seed, 8);
 
         let mut tea_key = [0u8; 16];
         for i in (0..16).step_by(2) {
@@ -165,7 +165,7 @@ mod tests {
     fn create_default_key_v1() -> Box<[u8]> {
         let (header, body) = b"12345678Some Key".split_at(8);
 
-        let simple_key = make_key(TEST_KEY_SEED, 8);
+        let simple_key = make_simple_key(TEST_KEY_SEED, 8);
         let mut tea_key = [0u8; 16];
         for i in (0..16).step_by(2) {
             tea_key[i] = simple_key[i / 2];

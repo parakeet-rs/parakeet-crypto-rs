@@ -1,7 +1,7 @@
 use std::ops::{Div, Mul};
 
 /// Used by the "QMC2 footer parser", used to derive the file key.
-pub fn make_key(seed: u8, size: usize) -> Box<[u8]> {
+pub fn make_simple_key(seed: u8, size: usize) -> Box<[u8]> {
     let seed = seed as f32;
     let mut result = vec![0u8; size].into_boxed_slice();
 
