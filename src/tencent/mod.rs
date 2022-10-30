@@ -1,3 +1,5 @@
+pub(self) mod qmc_legacy_block;
+
 pub mod qmc2;
 pub(self) mod qmc2_decryptor_map;
 pub(self) mod qmc2_decryptor_rc4;

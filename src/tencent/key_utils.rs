@@ -40,6 +40,30 @@ pub fn get_segment_key(key_hash: u64, id: u64, seed: u64) -> usize {
     }
 }
 
+#[inline]
+pub fn init_qmc_static_map_table(
+    table: &mut [u8; 0x8000],
+    key: &[u8],
+    key_mapper: fn(i: u32, key: &[u8]) -> u8,
+) {
+    // Derive cache table from key.
+    let key_size = key.len();
+
+    // (i * i + n) % m === ((i % m) * (i % m) + n) % m
+    // table size from 0x7fff => key_size
+    let mut small_table = vec![0u8; key_size].into_boxed_slice();
+    for (i, item) in small_table.iter_mut().enumerate() {
+        *item = key_mapper(i as u32, key);
+    }
+
+    // Populate the table
+    let small_table_len = small_table.len();
+    table[..small_table_len].copy_from_slice(&small_table);
+    for (prev_index, i) in (small_table_len..table.len()).enumerate() {
+        table[i] = table[prev_index];
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
