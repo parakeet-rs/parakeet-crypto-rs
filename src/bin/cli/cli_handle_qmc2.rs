@@ -5,7 +5,7 @@ use std::{
 
 use parakeet_crypto::{
     interfaces::decryptor::Decryptor,
-    tencent::{qmc2, qmc_footer_parser::QMCFooterParser},
+    tencent::{qmc2, qmc2_footer_parser::QMCFooterParser},
 };
 
 fn read_key_from_parameter(value: &str) -> Option<Box<[u8]>> {

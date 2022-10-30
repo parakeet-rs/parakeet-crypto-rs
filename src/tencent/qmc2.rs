@@ -1,4 +1,4 @@
-use super::qmc_footer_parser::QMCFooterParser;
+use super::qmc2_footer_parser::QMCFooterParser;
 use crate::interfaces::decryptor::{Decryptor, DecryptorError, SeekReadable};
 use std::io::Write;
 
