@@ -9,30 +9,7 @@
 
 ## 命令行调用
 
-<details>
-  <summary>查看详细</summary>
-
-为了方便测试，库内置了一个命令行。如果你知道你在干什么，你可以利用命令行来进行批量转码。
-
-你可以通过命令行来指定密钥以及解密文件参数，以下是几个解码仓库内的实例文件的调用方法展示：
-
-```sh
-# QMCv1: 支持 key58 或 key128
-cargo run --release qmc1 --static-key "@qmc1_key58.bin" "sample/test_qmc1.qmcogg" "decrypted.ogg"
-cargo run --release qmc1 --static-key "base64://4BAgMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4fICEiIyQlJicoKSorLC0uLzAxMjM0NTY3OA==" "sample/test_qmc1.qmcogg" "decrypted.ogg"
-
-# QMCv2: 支持 EncV2
-cargo run --release qmc2 --seed 123 --key1 "base64:CwwNDg8QERIVFhcYGRobHA==" --key2 "base64:HyAhIiMkJSYpKissLS4vMA==" "sample/test_qmc2_rc4_EncV2.mgg" "decrypted.ogg"
-cargo run --release qmc2 --seed 123 "sample/test_qmc2_rc4.mgg" "decrypted.ogg"
-cargo run --release qmc2 --seed 123 "sample/test_qmc2_map.mgg" "decrypted.ogg"
-```
-
-请注意：
-
-- 上述例子中的密钥为测试用的密钥，与流媒体软件的生产密钥不一致。
-- 你可以使用 `base64:` 直接描述密钥，或 `@文件名` 来从文件读取密钥。
-
-</details>
+你可以在项目百科查看[命令行调用][wiki_cli]相关的帮助内容。
 
 ## 声明
 
@@ -47,3 +24,4 @@ cargo run --release qmc2 --seed 123 "sample/test_qmc2_map.mgg" "decrypted.ogg"
 > We are not liable for any damage caused by the use of this software.
 
 [project_parakeet]: https://github.com/jixunmoe/parakeet
+[wiki_cli]: https://github.com/parakeet-rs/parakeet-crypto-rs/wiki/%E5%91%BD%E4%BB%A4%E8%A1%8C%E8%B0%83%E7%94%A8
