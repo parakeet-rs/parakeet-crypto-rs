@@ -72,6 +72,10 @@ pub fn cli_handle_qmc2(args: Vec<String>) {
 
     match args[1].as_str() {
         "qmc2" => {
+            if args.len() - i != 2 {
+                panic!("incorrect number of arguments: {:?}", args.len());
+            }
+
             let qmc2_map = qmc2::QMC2::new(parser);
             qmc2_map
                 .decrypt(
