@@ -3,5 +3,6 @@
     "cSpell.words": [
         "byteorder",
         "Decryptor"
-    ]
+    ],
+    "python.formatting.provider": "yapf"
 }
