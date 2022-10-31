@@ -5,13 +5,19 @@ use crate::interfaces::decryptor::{Decryptor, DecryptorError, SeekReadable};
 use super::utils::md5_kugou;
 
 pub struct KGM {
-    slot_key1: [u8; 16],
+    slot_key1: [u8; 4],
 }
 
 impl KGM {
     pub fn new(slot_key1: [u8; 4]) -> Self {
-        let slot_key1 = md5_kugou(&slot_key1);
         Self { slot_key1 }
+    }
+
+    fn get_slot_key(&self, key_index: usize) -> Box<[u8]> {
+        match key_index {
+            1 => Box::from(&self.slot_key1 as &[u8]),
+            _ => Box::from(&[0u8; 0] as &[u8]),
+        }
     }
 }
 

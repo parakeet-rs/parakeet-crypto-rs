@@ -1,7 +1,7 @@
 pub mod kgm_decryptor;
 
-mod decrypt_block;
-mod key_derive;
-mod key_derive_type2;
-mod key_derive_type3;
+mod kgm_crypto;
+mod kgm_crypto_type2;
+mod kgm_crypto_type3;
+mod kgm_header;
 mod utils;
