@@ -1,0 +1,49 @@
+//------------------------------------------------
+//--- 010 Editor v13.0 Binary Template
+//
+//      File: 
+//    Author: Jixun
+//   Version: 0.1
+//   Purpose: Parse NCM data
+//  Category: Audio
+// File Mask: *.kgm, *.vpr
+//  ID Bytes: 7C D5 32 EB 86 02 7F 4B A8 AF A6 8E 0F FF 99 14
+//   History: 
+//------------------------------------------------
+
+LittleEndian(); 
+BYTE magic[16];
+DWORD offset_to_data<format=hex>;
+DWORD encryption_type<format=hex, fgcolor=cLtAqua, bgcolor=cDkAqua>;
+DWORD key_slot<format=hex, bgcolor=cLtPurple, fgcolor=cDkPurple>;
+BYTE test_data[16]<format=hex>;
+BYTE file_key[16]<format=hex, bgcolor=cLtRed, fgcolor=cDkRed>;
+BYTE __unused_padding[offset_to_data-0x3C];
+
+local int64 audio_len = FileSize() - FTell();
+BYTE kgm_encrypted_data[audio_len]<format=hex, bgcolor=cDkGreen, fgcolor=cWhite, comment=ReadableSize(audio_len)>;
+
+
+
+
+string ReadableSize(uint32 value) {
+    local double v = value;
+    local string suffix = "B";
+    if (v <= 512) {
+        suffix = "B";
+    }
+    if (v > 512) {
+        suffix = "KiB";
+        v /= 1024;
+    }
+    if (v > 512) {
+        suffix = "MiB";
+        v /= 1024;
+    }
+    if (v > 512) {
+        suffix = "GiB";
+        v /= 1024;
+    }
+
+    return Str("(as size) %.2f %s", v, suffix);
+}
