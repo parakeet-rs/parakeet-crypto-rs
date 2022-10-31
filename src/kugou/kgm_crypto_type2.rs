@@ -2,11 +2,19 @@ use super::kgm_crypto::KGMCrypto;
 
 // Transparent encryption.
 
-struct KeyDeriveType2 {
+pub struct KGMCryptoType2 {
     key_slot_key: Vec<u8>,
 }
 
-impl KGMCrypto for KeyDeriveType2 {
+impl KGMCryptoType2 {
+    pub fn new() -> Self {
+        Self {
+            key_slot_key: vec![],
+        }
+    }
+}
+
+impl KGMCrypto for KGMCryptoType2 {
     fn expand_key_slot_key(&mut self, key_slot_key: &[u8]) {
         self.key_slot_key = key_slot_key.into();
     }

@@ -19,6 +19,10 @@ pub enum DecryptorError {
     StringEncodeError,
     Base64DecodeError(DecodeError),
     TEADecryptError,
+
+    KGMInvalidKeySlotError,
+    KGMInvalidFileKey,
+    KGMUnsupportedEncryptionType(u32),
 }
 
 pub trait Decryptor {

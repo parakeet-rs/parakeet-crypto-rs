@@ -1,23 +1,16 @@
-use std::io::SeekFrom;
+use std::{collections::HashMap, io::SeekFrom};
 
 use crate::interfaces::decryptor::{Decryptor, DecryptorError, SeekReadable};
 
-use super::utils::md5_kugou;
+use super::{kgm_crypto_factory::create_kgm_crypto, kgm_header::KGMHeader, utils::md5_kugou};
 
 pub struct KGM {
-    slot_key1: [u8; 4],
+    slot_keys: HashMap<u32, Box<[u8]>>,
 }
 
 impl KGM {
-    pub fn new(slot_key1: [u8; 4]) -> Self {
-        Self { slot_key1 }
-    }
-
-    fn get_slot_key(&self, key_index: usize) -> Box<[u8]> {
-        match key_index {
-            1 => Box::from(&self.slot_key1 as &[u8]),
-            _ => Box::from(&[0u8; 0] as &[u8]),
-        }
+    pub fn new(slot_keys: HashMap<u32, Box<[u8]>>) -> Self {
+        Self { slot_keys }
     }
 }
 
@@ -26,17 +19,39 @@ impl Decryptor for KGM {
         from.seek(SeekFrom::Start(0))
             .or(Err(DecryptorError::IOError))?;
 
-        let mut file_header = [0u8; 0x40];
-        from.read_exact(&mut file_header)
-            .or(Err(DecryptorError::IOError))?;
+        let header = KGMHeader::from_reader(from).or(Err(DecryptorError::IOError))?;
 
-        Ok(false)
+        create_kgm_crypto(&header, &self.slot_keys).and(Ok(true))
     }
+
     fn decrypt(
         &self,
         from: &mut dyn SeekReadable,
         to: &mut dyn std::io::Write,
     ) -> Result<(), DecryptorError> {
+        from.seek(SeekFrom::Start(0))
+            .or(Err(DecryptorError::IOError))?;
+
+        let header = KGMHeader::from_reader(from).or(Err(DecryptorError::IOError))?;
+        let mut decryptor = create_kgm_crypto(&header, &self.slot_keys)?;
+
+        let mut bytes_left = from
+            .seek(SeekFrom::End(0))
+            .or(Err(DecryptorError::IOError))?
+            - header.offset_to_data as u64;
+
+        from.seek(SeekFrom::Start(header.offset_to_data as u64))
+            .or(Err(DecryptorError::IOError))?;
+
+        let mut offset = 0;
+        let mut buffer = [0u8; 0x1000];
+        while bytes_left > 0 {
+            let bytes_read = from.read(&mut buffer).or(Err(DecryptorError::IOError))?;
+            decryptor.decrypt(offset, &mut buffer[..bytes_read]);
+            offset += bytes_read as u64;
+            bytes_left -= bytes_read as u64;
+        }
+
         Ok(())
     }
 }

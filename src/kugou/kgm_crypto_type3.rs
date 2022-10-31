@@ -1,11 +1,20 @@
 use super::{kgm_crypto::KGMCrypto, utils::md5_kugou};
 
-struct KeyDeriveType3 {
+pub struct KGMCryptoType3 {
     key1: [u8; 16],
     key2: [u8; 17],
 }
 
-impl KGMCrypto for KeyDeriveType3 {
+impl KGMCryptoType3 {
+    pub fn new() -> Self {
+        Self {
+            key1: [0; 16],
+            key2: [0; 17],
+        }
+    }
+}
+
+impl KGMCrypto for KGMCryptoType3 {
     fn expand_key_slot_key(&mut self, input: &[u8]) {
         self.key1 = md5_kugou(&input);
     }
