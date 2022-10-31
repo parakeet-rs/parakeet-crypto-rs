@@ -1,20 +1,17 @@
-use super::kgm_crypto::KGMCrypto;
+use super::kgm_crypto::{KGMCrypto, KGMCryptoConfig};
 
 // Transparent encryption.
 
+#[derive(Debug, Default, Clone)]
 pub struct KGMCryptoType2 {
     key: Box<[u8]>,
 }
 
-impl KGMCryptoType2 {
-    pub fn new() -> Self {
-        Self {
-            key: Box::from(&[] as &[u8]),
-        }
-    }
-}
-
 impl KGMCrypto for KGMCryptoType2 {
+    fn configure(&mut self, _config: &KGMCryptoConfig) {
+        // noop
+    }
+
     fn expand_slot_key(&mut self, slot_key: &[u8]) {
         self.key = slot_key.into();
     }

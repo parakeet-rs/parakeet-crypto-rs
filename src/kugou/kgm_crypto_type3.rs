@@ -1,20 +1,19 @@
-use super::{kgm_crypto::KGMCrypto, utils::md5_kugou};
+use super::{
+    kgm_crypto::{KGMCrypto, KGMCryptoConfig},
+    utils::md5_kugou,
+};
 
+#[derive(Debug, Default, Clone)]
 pub struct KGMCryptoType3 {
     key1: [u8; 16],
     key2: [u8; 17],
 }
 
-impl KGMCryptoType3 {
-    pub fn new() -> Self {
-        Self {
-            key1: [0; 16],
-            key2: [0; 17],
-        }
-    }
-}
-
 impl KGMCrypto for KGMCryptoType3 {
+    fn configure(&mut self, _config: &KGMCryptoConfig) {
+        // noop
+    }
+
     fn expand_slot_key(&mut self, input: &[u8]) {
         self.key1 = md5_kugou(&input);
     }

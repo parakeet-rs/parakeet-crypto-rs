@@ -1,9 +1,9 @@
-use std::collections::HashMap;
-
 use crate::interfaces::decryptor::DecryptorError;
 
 use super::{
-    kgm_crypto::KGMCrypto, kgm_crypto_type2::KGMCryptoType2, kgm_crypto_type3::KGMCryptoType3,
+    kgm_crypto::{KGMCrypto, KGMCryptoConfig},
+    kgm_crypto_type2::KGMCryptoType2,
+    kgm_crypto_type3::KGMCryptoType3,
     kgm_header::KGMHeader,
 };
 
@@ -14,12 +14,12 @@ const EXPECTED_DECRYPTION_RESULT: [u8; 16] = [
 
 pub fn create_kgm_crypto(
     header: &KGMHeader,
-    slot_keys: &HashMap<u32, Box<[u8]>>,
+    config: &KGMCryptoConfig,
 ) -> Result<Box<dyn KGMCrypto>, DecryptorError> {
-    if let Some(slot_key) = slot_keys.get(&header.key_slot) {
+    if let Some(slot_key) = config.slot_keys.get(&header.key_slot) {
         let mut decryptor: Box<dyn KGMCrypto> = match header.crypto_version {
-            2 => Box::from(KGMCryptoType2::new()),
-            3 => Box::from(KGMCryptoType3::new()),
+            2 => Box::from(KGMCryptoType2::default()),
+            3 => Box::from(KGMCryptoType3::default()),
             _ => {
                 return Err(DecryptorError::KGMUnsupportedEncryptionType(
                     header.crypto_version,
@@ -46,12 +46,12 @@ pub fn create_kgm_crypto(
 
 pub fn create_kgm_encryptor(
     header: &mut KGMHeader,
-    slot_keys: &HashMap<u32, Box<[u8]>>,
+    config: &KGMCryptoConfig,
 ) -> Result<Box<dyn KGMCrypto>, DecryptorError> {
-    if let Some(slot_key) = slot_keys.get(&header.key_slot) {
+    if let Some(slot_key) = config.slot_keys.get(&header.key_slot) {
         let mut encryptor: Box<dyn KGMCrypto> = match header.crypto_version {
-            2 => Box::from(KGMCryptoType2::new()),
-            3 => Box::from(KGMCryptoType3::new()),
+            2 => Box::from(KGMCryptoType2::default()),
+            3 => Box::from(KGMCryptoType3::default()),
             _ => {
                 return Err(DecryptorError::KGMUnsupportedEncryptionType(
                     header.crypto_version,

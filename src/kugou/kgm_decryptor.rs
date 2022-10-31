@@ -1,20 +1,21 @@
-use std::{collections::HashMap, io::SeekFrom};
+use std::io::SeekFrom;
 
 use crate::interfaces::decryptor::{Decryptor, DecryptorError, SeekReadable};
 
 use super::{
+    kgm_crypto::KGMCryptoConfig,
     kgm_crypto_factory::{create_kgm_crypto, create_kgm_encryptor},
     kgm_header::KGMHeader,
 };
 
 pub struct KGM {
-    slot_keys: HashMap<u32, Box<[u8]>>,
+    config: KGMCryptoConfig,
 }
 
 impl KGM {
-    pub fn new(slot_keys: &HashMap<u32, Box<[u8]>>) -> Self {
+    pub fn new(config: &KGMCryptoConfig) -> Self {
         Self {
-            slot_keys: slot_keys.clone(),
+            config: config.clone(),
         }
     }
 
@@ -26,7 +27,7 @@ impl KGM {
     ) -> Result<(), DecryptorError> {
         from.seek(SeekFrom::Start(0))
             .or(Err(DecryptorError::IOError))?;
-        let mut encryptor = create_kgm_encryptor(header, &self.slot_keys)?;
+        let mut encryptor = create_kgm_encryptor(header, &self.config)?;
 
         let header = header.to_bytes();
         to.write_all(&header).or(Err(DecryptorError::IOError))?;
@@ -60,7 +61,7 @@ impl Decryptor for KGM {
 
         let header = KGMHeader::from_reader(from).or(Err(DecryptorError::IOError))?;
 
-        create_kgm_crypto(&header, &self.slot_keys).and(Ok(true))
+        create_kgm_crypto(&header, &self.config).and(Ok(true))
     }
 
     fn decrypt(
@@ -72,7 +73,7 @@ impl Decryptor for KGM {
             .or(Err(DecryptorError::IOError))?;
 
         let header = KGMHeader::from_reader(from).or(Err(DecryptorError::IOError))?;
-        let mut decryptor = create_kgm_crypto(&header, &self.slot_keys)?;
+        let mut decryptor = create_kgm_crypto(&header, &self.config)?;
 
         let mut bytes_left = from
             .seek(SeekFrom::End(0))

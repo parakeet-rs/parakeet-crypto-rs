@@ -1,15 +1,15 @@
-use std::{collections::HashMap, fs::File};
+use std::fs::File;
 
 use parakeet_crypto::{
     interfaces::decryptor::Decryptor,
-    kugou::{self, kgm_header::KGMHeader},
+    kugou::{self, kgm_crypto::KGMCryptoConfig, kgm_header::KGMHeader},
 };
 
 use super::utils::read_key_from_parameter;
 
 pub fn cli_handle_kugou(args: Vec<String>) {
     let mut encrypt_header = Box::<[u8]>::from([]);
-    let mut slot_keys = HashMap::<u32, Box<[u8]>>::new();
+    let mut config = KGMCryptoConfig::default();
 
     let mut i = 2;
     loop {
@@ -19,7 +19,7 @@ pub fn cli_handle_kugou(args: Vec<String>) {
         if let Some(key) = arg.strip_prefix("--slot-key-") {
             let slot_id = key.parse::<u32>().unwrap();
             let slot_key = read_key_from_parameter(&args[i]).unwrap();
-            slot_keys.insert(slot_id, slot_key);
+            config.slot_keys.insert(slot_id, slot_key);
             i += 1;
         } else if arg.starts_with("--") {
             match arg {
@@ -52,7 +52,7 @@ pub fn cli_handle_kugou(args: Vec<String>) {
                 panic!("incorrect number of arguments: {:?}", args.len());
             }
 
-            let kgm = kugou::kgm_decryptor::KGM::new(&slot_keys);
+            let kgm = kugou::kgm_decryptor::KGM::new(&config);
             let mut input_file = File::open(&args[i]).unwrap();
             let mut output_file = File::create(&args[i + 1]).unwrap();
 
