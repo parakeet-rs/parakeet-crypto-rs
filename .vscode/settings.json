@@ -5,7 +5,9 @@
     "rust-analyzer.checkOnSave.command": "clippy",
     "cSpell.words": [
         "byteorder",
-        "Decryptor"
+        "Decryptor",
+        "DWORD",
+        "kugou"
     ],
     "python.formatting.provider": "yapf"
 }
