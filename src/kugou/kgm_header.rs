@@ -1,3 +1,5 @@
+use std::io::Cursor;
+
 use byteorder::{LittleEndian, ReadBytesExt};
 
 use crate::interfaces::decryptor::SeekReadable;
@@ -33,5 +35,26 @@ impl KGMHeader {
             decryptor_test_data,
             file_key,
         })
+    }
+
+    pub fn from_bytes(bytes: &[u8]) -> std::io::Result<Self> {
+        let mut stream = vec![];
+        stream.extend(bytes);
+        Self::from_reader(&mut Cursor::new(stream))
+    }
+
+    pub fn to_bytes(&self) -> Box<[u8]> {
+        let mut result: Vec<u8> = vec![];
+        result.extend(self.magic);
+        result.extend(self.offset_to_data.to_le_bytes());
+        result.extend(self.crypto_version.to_le_bytes());
+        result.extend(self.key_slot.to_le_bytes());
+        result.extend(self.decryptor_test_data);
+        result.extend(self.file_key);
+
+        debug_assert!(self.offset_to_data as usize >= result.len());
+        result.resize(self.offset_to_data as usize, 0);
+
+        result.into()
     }
 }

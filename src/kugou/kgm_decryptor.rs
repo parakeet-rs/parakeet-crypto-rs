@@ -2,7 +2,10 @@ use std::{collections::HashMap, io::SeekFrom};
 
 use crate::interfaces::decryptor::{Decryptor, DecryptorError, SeekReadable};
 
-use super::{kgm_crypto_factory::create_kgm_crypto, kgm_header::KGMHeader};
+use super::{
+    kgm_crypto_factory::{create_kgm_crypto, create_kgm_encryptor},
+    kgm_header::KGMHeader,
+};
 
 pub struct KGM {
     slot_keys: HashMap<u32, Box<[u8]>>,
@@ -13,6 +16,40 @@ impl KGM {
         Self {
             slot_keys: slot_keys.clone(),
         }
+    }
+
+    pub fn encrypt(
+        &self,
+        header: &mut KGMHeader,
+        from: &mut dyn SeekReadable,
+        to: &mut dyn std::io::Write,
+    ) -> Result<(), DecryptorError> {
+        from.seek(SeekFrom::Start(0))
+            .or(Err(DecryptorError::IOError))?;
+        let mut encryptor = create_kgm_encryptor(header, &self.slot_keys)?;
+
+        let header = header.to_bytes();
+        to.write_all(&header).or(Err(DecryptorError::IOError))?;
+
+        let mut bytes_left = from
+            .seek(SeekFrom::End(0))
+            .or(Err(DecryptorError::IOError))? as u64;
+
+        from.seek(SeekFrom::Start(0))
+            .or(Err(DecryptorError::IOError))?;
+
+        let mut offset = 0;
+        let mut buffer = [0u8; 0x1000];
+        while bytes_left > 0 {
+            let bytes_read = from.read(&mut buffer).or(Err(DecryptorError::IOError))?;
+            encryptor.encrypt(offset, &mut buffer[..bytes_read]);
+            to.write_all(&buffer[..bytes_read])
+                .or(Err(DecryptorError::IOError))?;
+            offset += bytes_read as u64;
+            bytes_left -= bytes_read as u64;
+        }
+
+        Ok(())
     }
 }
 

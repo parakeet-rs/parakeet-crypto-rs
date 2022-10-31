@@ -1,10 +1,14 @@
 use std::{collections::HashMap, fs::File};
 
-use parakeet_crypto::{interfaces::decryptor::Decryptor, kugou};
+use parakeet_crypto::{
+    interfaces::decryptor::Decryptor,
+    kugou::{self, kgm_header::KGMHeader},
+};
 
 use super::utils::read_key_from_parameter;
 
 pub fn cli_handle_kugou(args: Vec<String>) {
+    let mut encrypt_header = Box::<[u8]>::from([]);
     let mut slot_keys = HashMap::<u32, Box<[u8]>>::new();
 
     let mut i = 2;
@@ -21,6 +25,11 @@ pub fn cli_handle_kugou(args: Vec<String>) {
             match arg {
                 "--" => {
                     break;
+                }
+
+                "--encrypt-header" => {
+                    encrypt_header = read_key_from_parameter(&args[i]).unwrap();
+                    i += 1;
                 }
 
                 _ => {
@@ -44,11 +53,16 @@ pub fn cli_handle_kugou(args: Vec<String>) {
             }
 
             let kgm = kugou::kgm_decryptor::KGM::new(&slot_keys);
-            kgm.decrypt(
-                &mut File::open(&args[i]).unwrap(),
-                &mut File::create(&args[i + 1]).unwrap(),
-            )
-            .unwrap();
+            let mut input_file = File::open(&args[i]).unwrap();
+            let mut output_file = File::create(&args[i + 1]).unwrap();
+
+            if encrypt_header.len() > 0 {
+                let mut header = KGMHeader::from_bytes(&encrypt_header).unwrap();
+                kgm.encrypt(&mut header, &mut input_file, &mut output_file)
+                    .unwrap();
+            } else {
+                kgm.decrypt(&mut input_file, &mut output_file).unwrap();
+            }
         }
 
         _ => panic!("unknown command: {:?}", args[1]),

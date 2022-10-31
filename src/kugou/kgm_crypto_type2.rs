@@ -15,12 +15,12 @@ impl KGMCryptoType2 {
 }
 
 impl KGMCrypto for KGMCryptoType2 {
-    fn expand_slot_key(&mut self, _slot_key: &[u8]) {
-        // noop
+    fn expand_slot_key(&mut self, slot_key: &[u8]) {
+        self.key = slot_key.into();
     }
 
-    fn expand_file_key(&mut self, key: &[u8]) {
-        self.key = key.into();
+    fn expand_file_key(&mut self, _key: &[u8]) {
+        // noop
     }
 
     fn encrypt(&mut self, offset: u64, buffer: &mut [u8]) {

@@ -43,3 +43,32 @@ pub fn create_kgm_crypto(
         Err(DecryptorError::KGMInvalidKeySlotError(header.key_slot))
     }
 }
+
+pub fn create_kgm_encryptor(
+    header: &mut KGMHeader,
+    slot_keys: &HashMap<u32, Box<[u8]>>,
+) -> Result<Box<dyn KGMCrypto>, DecryptorError> {
+    if let Some(slot_key) = slot_keys.get(&header.key_slot) {
+        let mut encryptor: Box<dyn KGMCrypto> = match header.crypto_version {
+            2 => Box::from(KGMCryptoType2::new()),
+            3 => Box::from(KGMCryptoType3::new()),
+            _ => {
+                return Err(DecryptorError::KGMUnsupportedEncryptionType(
+                    header.crypto_version,
+                ))
+            }
+        };
+
+        // Key expansion
+        encryptor.expand_slot_key(slot_key);
+        encryptor.expand_file_key(&header.file_key);
+
+        // Key verification signature generation
+        header.decryptor_test_data = EXPECTED_DECRYPTION_RESULT;
+        encryptor.encrypt(0, &mut header.decryptor_test_data);
+
+        Ok(encryptor)
+    } else {
+        Err(DecryptorError::KGMInvalidKeySlotError(header.key_slot))
+    }
+}
