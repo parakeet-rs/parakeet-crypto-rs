@@ -9,6 +9,7 @@ fn main() {
     match command {
         "qmc1" => cli::cli_handle_qmc1(args),
         "qmc2" => cli::cli_handle_qmc2(args),
+        "kugou" => cli::cli_handle_kugou(args),
         _ => panic!("Unknown command {:?}", command),
     }
 }

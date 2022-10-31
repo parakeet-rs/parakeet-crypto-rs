@@ -9,8 +9,10 @@ pub struct KGM {
 }
 
 impl KGM {
-    pub fn new(slot_keys: HashMap<u32, Box<[u8]>>) -> Self {
-        Self { slot_keys }
+    pub fn new(slot_keys: &HashMap<u32, Box<[u8]>>) -> Self {
+        Self {
+            slot_keys: slot_keys.clone(),
+        }
     }
 }
 

@@ -20,7 +20,7 @@ pub enum DecryptorError {
     Base64DecodeError(DecodeError),
     TEADecryptError,
 
-    KGMInvalidKeySlotError,
+    KGMInvalidKeySlotError(u32),
     KGMInvalidFileKey,
     KGMUnsupportedEncryptionType(u32),
 }

@@ -40,6 +40,6 @@ pub fn create_kgm_crypto(
             Err(DecryptorError::KGMInvalidFileKey)
         }
     } else {
-        Err(DecryptorError::KGMInvalidKeySlotError)
+        Err(DecryptorError::KGMInvalidKeySlotError(header.key_slot))
     }
 }
