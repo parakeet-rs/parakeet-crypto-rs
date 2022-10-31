@@ -96,3 +96,44 @@ impl Decryptor for KGM {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::{
+        fs::{self, File},
+        path::PathBuf,
+    };
+
+    use super::*;
+
+    const TEST_SLOT_KEY1: [u8; 4] = *b"09AZ";
+
+    fn test_kgm_file(kgm_type: &str) {
+        let d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let path_encrypted = d.join(format!("sample/test_kgm_{}.kgm", kgm_type));
+        let path_source = d.join("sample/test_121529_32kbps.ogg");
+        let mut decrypted_content = Vec::new();
+
+        let mut file_encrypted = File::open(path_encrypted).unwrap();
+        let source_content = fs::read(path_source.as_path()).unwrap();
+
+        let mut slot_keys = HashMap::<u32, Box<[u8]>>::new();
+        slot_keys.insert(1, TEST_SLOT_KEY1.into());
+
+        let kgm = super::KGM::new(&slot_keys);
+        kgm.decrypt(&mut file_encrypted, &mut decrypted_content)
+            .unwrap();
+
+        assert_eq!(source_content, decrypted_content, "mismatched content");
+    }
+
+    #[test]
+    fn test_kgm_enc_v2() {
+        test_kgm_file("v2");
+    }
+
+    #[test]
+    fn test_kgm_enc_v3() {
+        test_kgm_file("v3");
+    }
+}
