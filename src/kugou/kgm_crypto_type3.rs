@@ -15,7 +15,7 @@ impl KGMCryptoType3 {
 }
 
 impl KGMCrypto for KGMCryptoType3 {
-    fn expand_key_slot_key(&mut self, input: &[u8]) {
+    fn expand_slot_key(&mut self, input: &[u8]) {
         self.key1 = md5_kugou(&input);
     }
 

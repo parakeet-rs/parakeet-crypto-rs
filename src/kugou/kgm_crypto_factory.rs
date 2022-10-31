@@ -28,7 +28,7 @@ pub fn create_kgm_crypto(
         };
 
         // Key expansion
-        decryptor.expand_key_slot_key(&slot_key);
+        decryptor.expand_slot_key(&slot_key);
         decryptor.expand_file_key(&header.file_key);
 
         // Decryption test
