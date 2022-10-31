@@ -1,5 +1,3 @@
-use std::io::{self, Read};
-
 use byteorder::{LittleEndian, ReadBytesExt};
 
 use crate::interfaces::decryptor::SeekReadable;
@@ -15,7 +13,7 @@ pub struct KGMHeader {
 
 impl KGMHeader {
     // FIXME: Why can't I use "dyn Read" here?
-    pub fn from_reader(reader: &mut dyn SeekReadable) -> io::Result<Self> {
+    pub fn from_reader(reader: &mut dyn SeekReadable) -> std::io::Result<Self> {
         let mut magic = [0u8; 16];
         let mut decryptor_test_data = [0u8; 16];
         let mut file_key = [0u8; 16];

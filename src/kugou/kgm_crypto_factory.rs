@@ -28,11 +28,11 @@ pub fn create_kgm_crypto(
         };
 
         // Key expansion
-        decryptor.expand_slot_key(&slot_key);
+        decryptor.expand_slot_key(slot_key);
         decryptor.expand_file_key(&header.file_key);
 
         // Decryption test
-        let mut test_data = header.decryptor_test_data.clone();
+        let mut test_data = header.decryptor_test_data;
         decryptor.decrypt(0, &mut test_data);
         if EXPECTED_DECRYPTION_RESULT == test_data {
             Ok(decryptor)

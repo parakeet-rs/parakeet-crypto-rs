@@ -2,7 +2,7 @@ use std::{collections::HashMap, io::SeekFrom};
 
 use crate::interfaces::decryptor::{Decryptor, DecryptorError, SeekReadable};
 
-use super::{kgm_crypto_factory::create_kgm_crypto, kgm_header::KGMHeader, utils::md5_kugou};
+use super::{kgm_crypto_factory::create_kgm_crypto, kgm_header::KGMHeader};
 
 pub struct KGM {
     slot_keys: HashMap<u32, Box<[u8]>>,
@@ -48,6 +48,8 @@ impl Decryptor for KGM {
         while bytes_left > 0 {
             let bytes_read = from.read(&mut buffer).or(Err(DecryptorError::IOError))?;
             decryptor.decrypt(offset, &mut buffer[..bytes_read]);
+            to.write_all(&buffer[..bytes_read])
+                .or(Err(DecryptorError::IOError))?;
             offset += bytes_read as u64;
             bytes_left -= bytes_read as u64;
         }
