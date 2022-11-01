@@ -21,12 +21,15 @@ impl KGMCrypto for KGMCryptoType2 {
     }
 
     fn encrypt(&mut self, offset: u64, buffer: &mut [u8]) {
-        let key = &self.key;
         let mut offset = offset as usize;
 
+        let key = &self.key;
+
         for item in buffer.iter_mut() {
+            let key_index = offset % key.len();
+
             let mut temp = *item;
-            temp ^= key[offset % key.len()];
+            temp ^= key[key_index];
             temp ^= temp << 4;
             *item = temp;
 
@@ -35,13 +38,16 @@ impl KGMCrypto for KGMCryptoType2 {
     }
 
     fn decrypt(&mut self, offset: u64, buffer: &mut [u8]) {
-        let key = &self.key;
         let mut offset = offset as usize;
 
+        let key = &self.key;
+
         for item in buffer.iter_mut() {
+            let key_index = offset % key.len();
+
             let mut temp = *item;
             temp ^= temp << 4;
-            temp ^= key[offset % key.len()];
+            temp ^= key[key_index];
             *item = temp;
 
             offset += 1;

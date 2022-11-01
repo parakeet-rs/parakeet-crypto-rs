@@ -1,12 +1,12 @@
 use super::{
     kgm_crypto::{KGMCrypto, KGMCryptoConfig},
-    utils::md5_kugou,
+    utils::{md5_kugou, offset_to_xor_key},
 };
 
 #[derive(Debug, Default, Clone)]
 pub struct KGMCryptoType3 {
-    key1: [u8; 16],
-    key2: [u8; 17],
+    slot_key: [u8; 16],
+    file_key: [u8; 17],
 }
 
 impl KGMCrypto for KGMCryptoType3 {
@@ -14,29 +14,37 @@ impl KGMCrypto for KGMCryptoType3 {
         // noop
     }
 
-    fn expand_slot_key(&mut self, input: &[u8]) {
-        self.key1 = md5_kugou(&input);
+    fn expand_slot_key(&mut self, key: &[u8]) {
+        self.slot_key = md5_kugou(&key);
     }
 
-    fn expand_file_key(&mut self, input: &[u8]) {
-        self.key2[..16].copy_from_slice(&md5_kugou(&input));
-        self.key2[16] = 0x6b;
+    fn expand_file_key(&mut self, key: &[u8]) {
+        self.file_key[..16].copy_from_slice(&md5_kugou(&key));
+        self.file_key[16] = 0x6b;
     }
 
     fn decrypt(&mut self, offset: u64, buffer: &mut [u8]) {
-        let key1 = self.key1;
-        let key2 = self.key2;
         let mut offset = offset;
 
+        let key1 = self.slot_key;
+        let key2 = self.file_key;
+
+        let key1_len = self.slot_key.len();
+        let key2_len = self.file_key.len();
+
         for item in buffer.iter_mut() {
-            let off_usize = offset as usize;
-            let off_bytes = (offset as u32).to_le_bytes();
+            // XOR all bytes of a "u32" integer.
+            let offset_key = offset_to_xor_key(offset);
+
+            let offset_usize = offset as usize;
+            let key1_index = offset_usize % key1_len;
+            let key2_index = offset_usize % key2_len;
 
             let mut temp = *item;
-            temp ^= key2[off_usize % key2.len()];
+            temp ^= key2[key2_index];
             temp ^= temp << 4;
-            temp ^= key1[off_usize % key1.len()];
-            temp ^= off_bytes[0] ^ off_bytes[1] ^ off_bytes[2] ^ off_bytes[3];
+            temp ^= key1[key1_index];
+            temp ^= offset_key;
             *item = temp;
 
             offset += 1;
@@ -44,19 +52,27 @@ impl KGMCrypto for KGMCryptoType3 {
     }
 
     fn encrypt(&mut self, offset: u64, buffer: &mut [u8]) {
-        let key1 = self.key1;
-        let key2 = self.key2;
         let mut offset = offset;
 
+        let key1 = self.slot_key;
+        let key2 = self.file_key;
+
+        let key1_len = self.slot_key.len();
+        let key2_len = self.file_key.len();
+
         for item in buffer.iter_mut() {
-            let off_usize = offset as usize;
-            let off_bytes = (offset as u32).to_le_bytes();
+            // XOR all bytes of a "u32" integer.
+            let offset_key = offset_to_xor_key(offset);
+
+            let offset_usize = offset as usize;
+            let key1_index = offset_usize % key1_len;
+            let key2_index = offset_usize % key2_len;
 
             let mut temp = *item;
-            temp ^= off_bytes[0] ^ off_bytes[1] ^ off_bytes[2] ^ off_bytes[3];
-            temp ^= key1[off_usize % key1.len()];
+            temp ^= offset_key;
+            temp ^= key1[key1_index];
             temp ^= temp << 4;
-            temp ^= key2[off_usize % key2.len()];
+            temp ^= key2[key2_index];
             *item = temp;
 
             offset += 1;
