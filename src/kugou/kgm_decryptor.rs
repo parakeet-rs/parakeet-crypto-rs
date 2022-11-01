@@ -113,15 +113,22 @@ mod tests {
         let d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let path_encrypted = d.join(format!("sample/test_kgm_{}.kgm", kgm_type));
         let path_source = d.join("sample/test_121529_32kbps.ogg");
+        let path_v4_filekey_table = d.join("sample/test_kgm_v4_filekey_table.bin");
+        let path_v4_slotkey_table = d.join("sample/test_kgm_v4_slotkey_table.bin");
+
         let mut decrypted_content = Vec::new();
 
         let mut file_encrypted = File::open(path_encrypted).unwrap();
         let source_content = fs::read(path_source.as_path()).unwrap();
+        let v4_filekey_table = fs::read(path_v4_filekey_table.as_path()).unwrap();
+        let v4_slotkey_table = fs::read(path_v4_slotkey_table.as_path()).unwrap();
 
-        let mut slot_keys = HashMap::<u32, Box<[u8]>>::new();
-        slot_keys.insert(1, TEST_SLOT_KEY1.into());
+        let mut config = KGMCryptoConfig::default();
+        config.slot_keys.insert(1, TEST_SLOT_KEY1.into());
+        config.v4_file_key_expand_table = v4_filekey_table.into();
+        config.v4_slot_key_expand_table = v4_slotkey_table.into();
 
-        let kgm = super::KGM::new(&slot_keys);
+        let kgm = super::KGM::new(&config);
         kgm.decrypt(&mut file_encrypted, &mut decrypted_content)
             .unwrap();
 
@@ -136,5 +143,10 @@ mod tests {
     #[test]
     fn test_kgm_enc_v3() {
         test_kgm_file("v3");
+    }
+
+    #[test]
+    fn test_kgm_enc_v4() {
+        test_kgm_file("v4");
     }
 }

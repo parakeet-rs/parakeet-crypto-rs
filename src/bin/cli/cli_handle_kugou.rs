@@ -32,6 +32,16 @@ pub fn cli_handle_kugou(args: Vec<String>) {
                     i += 1;
                 }
 
+                "--v4-file-key-expansion-table" => {
+                    config.v4_file_key_expand_table = read_key_from_parameter(&args[i]).unwrap();
+                    i += 1;
+                }
+
+                "--v4-slot-key-expansion-table" => {
+                    config.v4_slot_key_expand_table = read_key_from_parameter(&args[i]).unwrap();
+                    i += 1;
+                }
+
                 _ => {
                     panic!("Unknown argument: {:?}", arg);
                 }

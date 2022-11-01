@@ -3,8 +3,8 @@ use std::collections::HashMap;
 #[derive(Debug, Default, Clone)]
 pub struct KGMCryptoConfig {
     pub slot_keys: HashMap<u32, Box<[u8]>>,
-    pub v4_slot_key_expand_table: String,
-    pub v4_file_key_expand_table: String,
+    pub v4_slot_key_expand_table: Box<[u8]>,
+    pub v4_file_key_expand_table: Box<[u8]>,
 }
 
 pub trait KGMCrypto {

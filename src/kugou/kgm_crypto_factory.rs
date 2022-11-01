@@ -4,6 +4,7 @@ use super::{
     kgm_crypto::{KGMCrypto, KGMCryptoConfig},
     kgm_crypto_type2::KGMCryptoType2,
     kgm_crypto_type3::KGMCryptoType3,
+    kgm_crypto_type4::KGMCryptoType4,
     kgm_header::KGMHeader,
 };
 
@@ -20,6 +21,7 @@ pub fn create_kgm_crypto(
         let mut decryptor: Box<dyn KGMCrypto> = match header.crypto_version {
             2 => Box::from(KGMCryptoType2::default()),
             3 => Box::from(KGMCryptoType3::default()),
+            4 => Box::from(KGMCryptoType4::default()),
             _ => {
                 return Err(DecryptorError::KGMUnsupportedEncryptionType(
                     header.crypto_version,
@@ -55,6 +57,7 @@ pub fn create_kgm_encryptor(
         let mut encryptor: Box<dyn KGMCrypto> = match header.crypto_version {
             2 => Box::from(KGMCryptoType2::default()),
             3 => Box::from(KGMCryptoType3::default()),
+            4 => Box::from(KGMCryptoType4::default()),
             _ => {
                 return Err(DecryptorError::KGMUnsupportedEncryptionType(
                     header.crypto_version,
