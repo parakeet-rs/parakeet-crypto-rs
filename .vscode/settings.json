@@ -9,7 +9,9 @@
         "DWORD",
         "encryptor",
         "kugou",
-        "repr"
+        "repr",
+        "ximalaya",
+        "Xmly"
     ],
     "python.formatting.provider": "yapf"
 }
