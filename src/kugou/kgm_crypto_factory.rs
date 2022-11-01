@@ -27,6 +27,9 @@ pub fn create_kgm_crypto(
             }
         };
 
+        // Configure the decryptor...
+        decryptor.configure(config);
+
         // Key expansion
         decryptor.expand_slot_key(slot_key);
         decryptor.expand_file_key(&header.file_key);
@@ -58,6 +61,9 @@ pub fn create_kgm_encryptor(
                 ))
             }
         };
+
+        // Configure the encryptor...
+        encryptor.configure(config);
 
         // Key expansion
         encryptor.expand_slot_key(slot_key);
