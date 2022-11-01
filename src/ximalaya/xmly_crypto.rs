@@ -67,3 +67,5 @@ pub fn new_x2m(content_key: &[u8; 4], scramble_table: &[usize; 1024]) -> XmlyCry
 pub fn new_x3m(content_key: &[u8; 32], scramble_table: &[usize; 1024]) -> XmlyCrypto<32> {
     XmlyCrypto::new(content_key, scramble_table)
 }
+
+// TODO: add a factory that detects which crypto to use, based on the file header + key provided.
