@@ -4,7 +4,7 @@ use crate::interfaces::decryptor::{Decryptor, DecryptorError, SeekReadable};
 
 use super::{
     kgm_crypto::KGMCryptoConfig,
-    kgm_crypto_factory::{create_kgm_crypto, create_kgm_encryptor},
+    kgm_crypto_factory::{create_kgm_decryptor, create_kgm_encryptor},
     kgm_header::KGMHeader,
 };
 
@@ -61,7 +61,7 @@ impl Decryptor for KGM {
 
         let header = KGMHeader::from_reader(from).or(Err(DecryptorError::IOError))?;
 
-        create_kgm_crypto(&header, &self.config).and(Ok(true))
+        create_kgm_decryptor(&header, &self.config).and(Ok(true))
     }
 
     fn decrypt(
@@ -73,7 +73,7 @@ impl Decryptor for KGM {
             .or(Err(DecryptorError::IOError))?;
 
         let header = KGMHeader::from_reader(from).or(Err(DecryptorError::IOError))?;
-        let mut decryptor = create_kgm_crypto(&header, &self.config)?;
+        let mut decryptor = create_kgm_decryptor(&header, &self.config)?;
 
         let mut bytes_left = from
             .seek(SeekFrom::End(0))
