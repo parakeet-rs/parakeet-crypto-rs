@@ -62,11 +62,6 @@ impl KGMCrypto for KGMCryptoType4 {
     fn configure(&mut self, config: &KGMCryptoConfig) {
         self.expanded_file_key_table = Box::from(&config.v4_file_key_expand_table[..]);
         self.expanded_slot_key_table = Box::from(&config.v4_slot_key_expand_table[..]);
-        println!(
-            "configured! table size: {} + {}",
-            self.expanded_file_key_table.len(),
-            self.expanded_slot_key_table.len()
-        );
     }
 
     fn expand_slot_key(&mut self, key: &[u8]) {
