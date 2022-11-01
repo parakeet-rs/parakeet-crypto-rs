@@ -31,7 +31,8 @@ impl KGMCryptoType4 {
         }
         let md5_final = md5_final;
 
-        let mut expanded_key = Vec::<u8>::with_capacity(4 * md5_final.len() * key.len());
+        let final_key_size = 4 * (md5_final.len() - 1) * (key.len() - 1);
+        let mut expanded_key = Vec::<u8>::with_capacity(final_key_size);
         for (i, &j) in md5_final.iter().enumerate().skip(1) {
             let temp = (i as u32).wrapping_mul(j as u32);
 
