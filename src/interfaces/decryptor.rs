@@ -24,6 +24,8 @@ pub enum DecryptorError {
     KGMInvalidFileKey,
     KGMUnsupportedEncryptionType(u32),
     KGMv4ExpansionTableRequired,
+
+    XimalayaCountNotFindImplementation,
 }
 
 pub trait Decryptor {

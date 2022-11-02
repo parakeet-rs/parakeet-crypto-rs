@@ -60,6 +60,28 @@ impl<const KEY_SIZE: usize> Decryptor for XmlyCrypto<KEY_SIZE> {
     }
 }
 
-// TODO: add a factory that detects which crypto to use, based on the file header + key provided.
 pub type X2M = XmlyCrypto<4>;
 pub type X3M = XmlyCrypto<32>;
+
+pub fn new_from_key(
+    key: &[u8],
+    scramble_table: &[usize; 1024],
+) -> Result<Box<dyn Decryptor>, DecryptorError> {
+    let decryptor: Box<dyn Decryptor> = match key.len() {
+        4 => {
+            let mut buffer = [0u8; 4];
+            buffer.copy_from_slice(key);
+            Box::from(X2M::new(&buffer, scramble_table))
+        }
+
+        32 => {
+            let mut buffer = [0u8; 32];
+            buffer.copy_from_slice(key);
+            Box::from(X3M::new(&buffer, scramble_table))
+        }
+
+        _ => return Err(DecryptorError::XimalayaCountNotFindImplementation),
+    };
+
+    Ok(decryptor)
+}
