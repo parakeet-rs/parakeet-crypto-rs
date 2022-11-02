@@ -26,3 +26,6 @@ venv/
 *.flac
 *.mp3
 *.dff
+
+keys/
+local/

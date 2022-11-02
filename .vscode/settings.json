@@ -4,6 +4,7 @@
     },
     "rust-analyzer.checkOnSave.command": "clippy",
     "cSpell.words": [
+        "argh",
         "byteorder",
         "Decryptor",
         "DWORD",
