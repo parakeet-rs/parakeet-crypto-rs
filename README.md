@@ -4,12 +4,23 @@
 
 ## 目前已实现的算法
 
-- QMCv1 (static_map)
-- QMCv2 (map / rc4)
+- QQ 音乐
+  - QMCv1 (static_map)
+  - QMCv2 (map / rc4)
+- 酷狗音乐
+  - KGM / VPR
 
 ## 命令行调用
 
 你可以在项目百科查看[命令行调用][wiki_cli]相关的帮助内容。
+
+## 致谢
+
+部分项目参考了其他人现有的项目，你可以点击下述链接查看：
+
+- [`Presburger/qmc-decoder`](https://github.com/Presburger/qmc-decoder)
+- [`nukemiko/libtakiyasha`](https://github.com/nukemiko/libtakiyasha)
+- [`unlock-music/cli`](https://github.com/unlock-music/cli)
 
 ## 声明
 

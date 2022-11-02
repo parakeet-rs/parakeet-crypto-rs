@@ -1,15 +1,23 @@
-use std::env;
+use cli::cli_handle_kugou;
+use cli::{cli_handle_qmc1, cli_handle_qmc2, commands::ParakeetCLIArgRoot};
+
+use cli::commands::ParakeetCryptoName as Command;
 
 mod cli;
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    let command = args[1].as_str();
+    let options: ParakeetCLIArgRoot = argh::from_env();
 
-    match command {
-        "qmc1" => cli::cli_handle_qmc1(args),
-        "qmc2" => cli::cli_handle_qmc2(args),
-        "kugou" => cli::cli_handle_kugou(args),
-        _ => panic!("Unknown command {:?}", command),
+    #[cfg(debug_assertions)]
+    {
+        let log = cli::logger::CliLogger::new("main");
+        log.warn("parakeet_cli was built without optimizations.");
+        log.warn("Use release build for better performance.");
+    }
+
+    match options.command {
+        Command::ModuleQMC1(options) => cli_handle_qmc1(options),
+        Command::ModuleQMC2(options) => cli_handle_qmc2(options),
+        Command::ModuleKGM(options) => cli_handle_kugou(options),
     }
 }

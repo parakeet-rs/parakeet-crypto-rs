@@ -1,57 +1,46 @@
-use std::fs::File;
+use std::{fs::File, process};
 
+use argh::FromArgs;
 use parakeet_crypto::{interfaces::decryptor::Decryptor, tencent::qmc1};
 
-use super::utils::read_key_from_parameter;
+use super::{
+    logger::CliLogger,
+    utils::{CliBinaryContent, CliFilePath, CliFriendlyDecryptionError},
+};
 
-pub fn cli_handle_qmc1(args: Vec<String>) {
-    let mut static_key = Box::from(&[] as &[u8]);
+/// Handle QMC1 File.
+#[derive(Debug, Eq, PartialEq, FromArgs)]
+#[argh(subcommand, name = "qmc1")]
+pub struct QMC1Options {
+    /// static key for QMC1 decryption.
+    #[argh(option)]
+    static_key: CliBinaryContent,
 
-    let mut i = 2;
-    loop {
-        let arg: &str = &args[i];
-        i += 1;
+    /// input file name/path
+    #[argh(positional)]
+    input_file: CliFilePath,
 
-        if arg.starts_with("--") {
-            match arg {
-                "--static-key" => {
-                    static_key = read_key_from_parameter(&args[i]).unwrap();
-                    i += 1;
-                }
+    /// output file name/path
+    #[argh(positional)]
+    output_file: CliFilePath,
+}
 
-                "--" => {
-                    break;
-                }
+pub fn cli_handle_qmc1(args: QMC1Options) {
+    let log = CliLogger::new("QMC1");
+    let qmc1_map = qmc1::QMC1::new(&args.static_key.content);
+    log.info(&format!(
+        "Static key accepted (key{})",
+        args.static_key.content.len()
+    ));
 
-                _ => {
-                    panic!("Unknown argument: {:?}", arg);
-                }
-            }
-        } else {
-            i -= 1;
-            break;
-        }
-
-        if i >= args.len() {
-            break;
-        }
-    }
-
-    match args[1].as_str() {
-        "qmc1" => {
-            if args.len() - i != 2 {
-                panic!("incorrect number of arguments: {:?}", args.len());
-            }
-
-            let qmc1_map = qmc1::QMC1::new(&static_key[..]);
-            qmc1_map
-                .decrypt(
-                    &mut File::open(&args[i]).unwrap(),
-                    &mut File::create(&args[i + 1]).unwrap(),
-                )
-                .unwrap();
-        }
-
-        _ => panic!("unknown command: {:?}", args[1]),
-    }
+    qmc1_map
+        .decrypt(
+            &mut File::open(args.input_file.path).unwrap(),
+            &mut File::create(args.output_file.path).unwrap(),
+        )
+        .unwrap_or_else(|err| {
+            log.error(&format!("Decryption failed: {}", err.to_friendly_error()));
+            process::exit(1);
+        });
+    log.info("Decryption OK.");
 }

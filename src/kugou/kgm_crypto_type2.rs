@@ -1,3 +1,5 @@
+use crate::interfaces::decryptor::DecryptorError;
+
 use super::kgm_crypto::{KGMCrypto, KGMCryptoConfig};
 
 // Transparent encryption.
@@ -8,8 +10,8 @@ pub struct KGMCryptoType2 {
 }
 
 impl KGMCrypto for KGMCryptoType2 {
-    fn configure(&mut self, _config: &KGMCryptoConfig) {
-        // noop
+    fn configure(&mut self, _config: &KGMCryptoConfig) -> Result<(), DecryptorError> {
+        Ok(())
     }
 
     fn expand_slot_key(&mut self, slot_key: &[u8]) {

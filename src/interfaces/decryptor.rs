@@ -23,6 +23,7 @@ pub enum DecryptorError {
     KGMInvalidKeySlotError(u32),
     KGMInvalidFileKey,
     KGMUnsupportedEncryptionType(u32),
+    KGMv4ExpansionTableRequired,
 }
 
 pub trait Decryptor {

@@ -1,80 +1,92 @@
-use std::fs::File;
+use std::{fs::File, process};
 
+use argh::FromArgs;
 use parakeet_crypto::{
     interfaces::decryptor::Decryptor,
     kugou::{self, kgm_crypto::KGMCryptoConfig, kgm_header::KGMHeader},
 };
 
-use super::utils::read_key_from_parameter;
+use super::{
+    logger::CliLogger,
+    utils::{CliBinaryContent, CliFilePath, CliFriendlyDecryptionError},
+};
 
-pub fn cli_handle_kugou(args: Vec<String>) {
-    let mut encrypt_header = Box::<[u8]>::from([]);
+/// Handle Kugou encryption/decryption.
+#[derive(Debug, Eq, PartialEq, FromArgs)]
+#[argh(subcommand, name = "kugou")]
+pub struct KugouOptions {
+    /// slot key 1 content.
+    #[argh(option)]
+    slot_key_1: CliBinaryContent,
+
+    /// enable encrypt mode, with specified template header.
+    /// signature will be re-generated for given key in the template.
+    #[argh(option)]
+    encrypt_header: Option<CliBinaryContent>,
+
+    /// file key expansion table for encryption schema v4.
+    #[argh(option)]
+    v4_file_key_expansion_table: Option<CliBinaryContent>,
+
+    /// slot key expansion table for encryption schema v4.
+    #[argh(option)]
+    v4_slot_key_expansion_table: Option<CliBinaryContent>,
+
+    /// input file path.
+    #[argh(positional)]
+    input_file: CliFilePath,
+
+    /// output file path.
+    #[argh(positional)]
+    output_file: CliFilePath,
+}
+
+pub fn cli_handle_kugou(args: KugouOptions) {
+    let log = CliLogger::new("Kugou");
+
     let mut config = KGMCryptoConfig::default();
 
-    let mut i = 2;
-    loop {
-        let arg: &str = &args[i];
-        i += 1;
-
-        if let Some(key) = arg.strip_prefix("--slot-key-") {
-            let slot_id = key.parse::<u32>().unwrap();
-            let slot_key = read_key_from_parameter(&args[i]).unwrap();
-            config.slot_keys.insert(slot_id, slot_key);
-            i += 1;
-        } else if arg.starts_with("--") {
-            match arg {
-                "--" => {
-                    break;
-                }
-
-                "--encrypt-header" => {
-                    encrypt_header = read_key_from_parameter(&args[i]).unwrap();
-                    i += 1;
-                }
-
-                "--v4-file-key-expansion-table" => {
-                    config.v4_file_key_expand_table = read_key_from_parameter(&args[i]).unwrap();
-                    i += 1;
-                }
-
-                "--v4-slot-key-expansion-table" => {
-                    config.v4_slot_key_expand_table = read_key_from_parameter(&args[i]).unwrap();
-                    i += 1;
-                }
-
-                _ => {
-                    panic!("Unknown argument: {:?}", arg);
-                }
-            }
-        } else {
-            i -= 1;
-            break;
-        }
-
-        if i >= args.len() {
-            break;
-        }
+    if let Some(table) = args.v4_file_key_expansion_table {
+        config.v4_file_key_expand_table = table.content;
+        log.info("(v4) file key expansion table accepted.");
     }
 
-    match args[1].as_str() {
-        "kugou" => {
-            if args.len() - i != 2 {
-                panic!("incorrect number of arguments: {:?}", args.len());
-            }
-
-            let kgm = kugou::kgm_decryptor::KGM::new(&config);
-            let mut input_file = File::open(&args[i]).unwrap();
-            let mut output_file = File::create(&args[i + 1]).unwrap();
-
-            if encrypt_header.len() > 0 {
-                let mut header = KGMHeader::from_bytes(&encrypt_header).unwrap();
-                kgm.encrypt(&mut header, &mut input_file, &mut output_file)
-                    .unwrap();
-            } else {
-                kgm.decrypt(&mut input_file, &mut output_file).unwrap();
-            }
-        }
-
-        _ => panic!("unknown command: {:?}", args[1]),
+    if let Some(table) = args.v4_slot_key_expansion_table {
+        config.v4_slot_key_expand_table = table.content;
+        log.info("(v4) slot key expansion table accepted.");
     }
+
+    // Configure key slots
+    config.slot_keys.insert(1, args.slot_key_1.content);
+
+    let kgm = kugou::kgm_decryptor::KGM::new(&config);
+    let mut input_file = File::open(args.input_file.path).unwrap();
+    let mut output_file = File::create(args.output_file.path).unwrap();
+
+    let operation = if args.encrypt_header.is_some() {
+        "Encryption"
+    } else {
+        "Decryption"
+    };
+
+    if let Some(encrypt_header) = args.encrypt_header {
+        let mut header = KGMHeader::from_bytes(&encrypt_header.content).unwrap_or_else(|err| {
+            log.error(&format!("Could not parse header: {:?}", err));
+            process::exit(1)
+        });
+
+        kgm.encrypt(&mut header, &mut input_file, &mut output_file)
+    } else {
+        kgm.decrypt(&mut input_file, &mut output_file)
+    }
+    .unwrap_or_else(|err| {
+        log.error(&format!(
+            "{} failed: {}",
+            operation,
+            err.to_friendly_error()
+        ));
+        process::exit(1)
+    });
+
+    log.info(&format!("{} OK.", operation));
 }
