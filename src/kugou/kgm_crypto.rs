@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use crate::interfaces::decryptor::DecryptorError;
+
 #[derive(Debug, Default, Clone)]
 pub struct KGMCryptoConfig {
     pub slot_keys: HashMap<u32, Box<[u8]>>,
@@ -8,7 +10,7 @@ pub struct KGMCryptoConfig {
 }
 
 pub trait KGMCrypto {
-    fn configure(&mut self, config: &KGMCryptoConfig);
+    fn configure(&mut self, config: &KGMCryptoConfig) -> Result<(), DecryptorError>;
 
     fn expand_slot_key(&mut self, input: &[u8]);
     fn expand_file_key(&mut self, input: &[u8]);

@@ -31,7 +31,7 @@ fn create_kgm_crypto(
         };
 
         // Configure the decryptor...
-        decryptor.configure(config);
+        decryptor.configure(config)?;
 
         // Key expansion
         decryptor.expand_slot_key(slot_key);

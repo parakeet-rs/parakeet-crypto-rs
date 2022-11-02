@@ -1,3 +1,5 @@
+use crate::interfaces::decryptor::DecryptorError;
+
 use super::{
     kgm_crypto::{KGMCrypto, KGMCryptoConfig},
     utils::{md5_kugou, offset_to_xor_key},
@@ -10,8 +12,8 @@ pub struct KGMCryptoType3 {
 }
 
 impl KGMCrypto for KGMCryptoType3 {
-    fn configure(&mut self, _config: &KGMCryptoConfig) {
-        // noop
+    fn configure(&mut self, _config: &KGMCryptoConfig) -> Result<(), DecryptorError> {
+        Ok(())
     }
 
     fn expand_slot_key(&mut self, key: &[u8]) {

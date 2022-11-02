@@ -1,4 +1,4 @@
-use crate::utils::md5;
+use crate::{interfaces::decryptor::DecryptorError, utils::md5};
 
 use super::{
     kgm_crypto::{KGMCrypto, KGMCryptoConfig},
@@ -59,9 +59,15 @@ impl KGMCryptoType4 {
 }
 
 impl KGMCrypto for KGMCryptoType4 {
-    fn configure(&mut self, config: &KGMCryptoConfig) {
+    fn configure(&mut self, config: &KGMCryptoConfig) -> Result<(), DecryptorError> {
         self.expanded_file_key_table = Box::from(&config.v4_file_key_expand_table[..]);
         self.expanded_slot_key_table = Box::from(&config.v4_slot_key_expand_table[..]);
+
+        if self.expanded_file_key_table.len() == 0 || self.expanded_slot_key_table.len() == 0 {
+            Err(DecryptorError::KGMv4ExpansionTableRequired)
+        } else {
+            Ok(())
+        }
     }
 
     fn expand_slot_key(&mut self, key: &[u8]) {

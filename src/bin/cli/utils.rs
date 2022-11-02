@@ -1,6 +1,7 @@
 use std::{fs, path::Path};
 
 use argh::FromArgValue;
+use parakeet_crypto::interfaces::decryptor::DecryptorError;
 
 pub fn read_key_from_parameter(value: &str) -> Option<Box<[u8]>> {
     if let Some(value) = value.strip_prefix('@') {
@@ -64,5 +65,30 @@ impl FromArgValue for CliFilePath {
         Ok(Self {
             path: Box::from(Path::new(value)),
         })
+    }
+}
+
+pub trait CliFriendlyDecryptionError {
+    fn to_friendly_error(&self) -> String;
+}
+
+impl CliFriendlyDecryptionError for DecryptorError {
+    fn to_friendly_error(&self) -> String {
+        match self {
+            DecryptorError::TEADecryptError => String::from("TEA key error (is your key correct?)"),
+            DecryptorError::QMCAndroidQTagInvalid => String::from("Parsing 'QTag' file failed."),
+            DecryptorError::QMCInvalidFooter(magic) => {
+                format!(
+                    "QMC parse error - footer magic: {}",
+                    hex::encode(magic.to_be_bytes())
+                )
+            }
+            DecryptorError::KGMv4ExpansionTableRequired => {
+                String::from("both kugou v4 expansion tables are required.")
+            }
+            _ => {
+                format!("{:?}", self)
+            }
+        }
     }
 }

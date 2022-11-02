@@ -5,7 +5,7 @@ use parakeet_crypto::{interfaces::decryptor::Decryptor, tencent::qmc1};
 
 use super::{
     logger::CliLogger,
-    utils::{CliBinaryContent, CliFilePath},
+    utils::{CliBinaryContent, CliFilePath, CliFriendlyDecryptionError},
 };
 
 /// Handle QMC1 File.
@@ -39,7 +39,7 @@ pub fn cli_handle_qmc1(args: QMC1Options) {
             &mut File::create(args.output_file.path).unwrap(),
         )
         .unwrap_or_else(|err| {
-            log.error(&format!("Decryption failed: {:?}", err));
+            log.error(&format!("Decryption failed: {}", err.to_friendly_error()));
             process::exit(1);
         });
     log.info("Decryption OK.");
