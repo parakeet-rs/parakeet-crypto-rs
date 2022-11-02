@@ -19,7 +19,7 @@ pub struct KugouOptions {
     #[argh(option)]
     slot_key_1: CliBinaryContent,
 
-    /// enable encrypt mode. use specified template header.
+    /// enable encrypt mode, with specified template header.
     /// signature will be re-generated for given key in the template.
     #[argh(option)]
     encrypt_header: Option<CliBinaryContent>,
