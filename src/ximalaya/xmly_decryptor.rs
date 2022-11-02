@@ -24,8 +24,8 @@ impl<const KEY_SIZE: usize> XmlyCrypto<KEY_SIZE> {
     fn decrypt_header(&self, &buffer: &[u8; 1024]) -> [u8; 1024] {
         let mut result = buffer;
 
-        for (key_index, &i) in self.scramble_table.iter().enumerate() {
-            result[i] = buffer[i] ^ self.content_key[key_index % self.content_key.len()]
+        for (i, &mapped_index) in self.scramble_table.iter().enumerate() {
+            result[i] = buffer[mapped_index] ^ self.content_key[i % self.content_key.len()]
         }
 
         result
