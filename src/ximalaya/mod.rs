@@ -1,3 +1,3 @@
-mod xmly_decryptor;
+mod xmly;
 
-pub use xmly_decryptor::{new_from_key, X2M, X3M};
+pub use xmly::{new_from_key, X2M, X3M};
