@@ -43,11 +43,11 @@ impl<const SIZE: usize> FromArgValue for CliBinaryArray<SIZE> {
                 buffer.copy_from_slice(&parsed);
                 Ok(Self { content: buffer })
             } else {
-                Err(String::from(format!(
+                Err(format!(
                     "parameter size mismatch, expected {} bytes, got {}",
                     SIZE,
                     parsed.len()
-                )))
+                ))
             }
         } else {
             Err(String::from("could not binary data"))
