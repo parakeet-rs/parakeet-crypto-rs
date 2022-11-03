@@ -131,3 +131,50 @@ pub fn new_from_key(
 
     Ok(decryptor)
 }
+
+#[cfg(test)]
+mod tests {
+    use std::{
+        fs::{self, File},
+        path::PathBuf,
+    };
+
+    fn test_xmly_file(xmly_type: &str) {
+        let d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let path_encrypted = d.join(format!("sample/test_xmly.{}", xmly_type));
+        let path_source = d.join("sample/test_121529_32kbps.ogg");
+        let path_content_key = d.join(format!("sample/test_{}_key.bin", xmly_type));
+        let path_scramble_table = d.join("sample/test_xmly_scramble_table.bin");
+
+        let mut decrypted_content = Vec::new();
+
+        let mut file_encrypted = File::open(path_encrypted).unwrap();
+        let source_content = fs::read(path_source.as_path()).unwrap();
+        let content_key = fs::read(path_content_key.as_path()).unwrap();
+        let scramble_table_bin = fs::read(path_scramble_table.as_path()).unwrap();
+
+        let mut scramble_table = [0usize; 1024];
+        for (i, item) in scramble_table.iter_mut().enumerate() {
+            let mut buffer = [0u8; 2];
+            buffer.copy_from_slice(&scramble_table_bin[i * 2..i * 2 + 2]);
+            *item = u16::from_le_bytes(buffer) as usize;
+        }
+
+        let decryptor = super::new_from_key(&content_key, &scramble_table).unwrap();
+        decryptor
+            .decrypt(&mut file_encrypted, &mut decrypted_content)
+            .unwrap();
+
+        assert_eq!(source_content, decrypted_content, "mismatched content");
+    }
+
+    #[test]
+    fn test_x2m() {
+        test_xmly_file("x2m");
+    }
+
+    #[test]
+    fn test_x3m() {
+        test_xmly_file("x3m");
+    }
+}
