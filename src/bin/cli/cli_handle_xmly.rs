@@ -22,6 +22,11 @@ pub struct XimalayaOptions {
     #[argh(option)]
     key: CliBinaryContent,
 
+    /// encrypt instead of decrypt.
+    /// default to decrypt.
+    #[argh(switch)]
+    encrypt: bool,
+
     /// input file path.
     #[argh(positional)]
     input_file: CliFilePath,
@@ -49,10 +54,16 @@ pub fn cli_handle_xmly(args: XimalayaOptions) {
         *item = u16::from_le_bytes(buffer) as usize;
     }
 
+    let operation = if args.encrypt {
+        "Encryption"
+    } else {
+        "Decryption"
+    };
+
     let xmly =
         ximalaya::new_from_key(&args.key.content[..], &scramble_table).unwrap_or_else(|err| {
             log.error(&format!(
-                "Create decryptor using key failed: {}",
+                "Create encryptor/decryptor using key failed: {}",
                 err.to_friendly_error()
             ));
             process::exit(1)
@@ -60,11 +71,19 @@ pub fn cli_handle_xmly(args: XimalayaOptions) {
     let mut input_file = File::open(args.input_file.path).unwrap();
     let mut output_file = File::create(args.output_file.path).unwrap();
 
-    xmly.decrypt(&mut input_file, &mut output_file)
-        .unwrap_or_else(|err| {
-            log.error(&format!("Decryption failed: {}", err.to_friendly_error()));
-            process::exit(1)
-        });
+    if args.encrypt {
+        xmly.encrypt(&mut input_file, &mut output_file)
+    } else {
+        xmly.decrypt(&mut input_file, &mut output_file)
+    }
+    .unwrap_or_else(|err| {
+        log.error(&format!(
+            "{} failed: {}",
+            operation,
+            err.to_friendly_error()
+        ));
+        process::exit(1)
+    });
 
-    log.info("Decryption OK.");
+    log.info(&format!("{} OK.", operation));
 }

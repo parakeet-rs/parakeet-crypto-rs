@@ -13,6 +13,51 @@ pub struct XmlyCrypto<const KEY_SIZE: usize> {
     scramble_table: [usize; 1024],
 }
 
+pub trait XmlyCryptoImpl: Decryptor {
+    fn decrypt_header(&self, encrypted: &[u8; 1024]) -> [u8; 1024];
+    fn encrypt_header(&self, encrypted: &[u8; 1024]) -> [u8; 1024];
+
+    fn encrypt(
+        &self,
+        from: &mut dyn SeekReadable,
+        to: &mut dyn std::io::Write,
+    ) -> Result<(), DecryptorError>;
+}
+
+impl<const KEY_SIZE: usize> XmlyCryptoImpl for XmlyCrypto<KEY_SIZE> {
+    fn decrypt_header(&self, encrypted: &[u8; 1024]) -> [u8; 1024] {
+        let mut decrypted = *encrypted;
+
+        for (di, &ei) in self.scramble_table.iter().enumerate() {
+            let key = self.content_key[di % self.content_key.len()];
+            decrypted[di] = encrypted[ei] ^ key
+        }
+
+        decrypted
+    }
+
+    fn encrypt_header(&self, decrypted: &[u8; 1024]) -> [u8; 1024] {
+        let mut encrypted = *decrypted;
+        let reverse_scramble_table = self.scramble_table;
+
+        for (di, &ei) in reverse_scramble_table.iter().enumerate() {
+            let key = self.content_key[di % self.content_key.len()];
+            encrypted[ei] = decrypted[di] ^ key
+        }
+
+        encrypted
+    }
+
+    fn encrypt(
+        &self,
+        from: &mut dyn SeekReadable,
+        to: &mut dyn std::io::Write,
+    ) -> Result<(), DecryptorError> {
+        self.handle_file(from, to, |header| self.encrypt_header(header))
+            .or(Err(DecryptorError::IOError))
+    }
+}
+
 impl<const KEY_SIZE: usize> XmlyCrypto<KEY_SIZE> {
     pub fn new(content_key: &[u8; KEY_SIZE], scramble_table: &[usize; 1024]) -> Self {
         Self {
@@ -21,14 +66,27 @@ impl<const KEY_SIZE: usize> XmlyCrypto<KEY_SIZE> {
         }
     }
 
-    fn decrypt_header(&self, &buffer: &[u8; 1024]) -> [u8; 1024] {
-        let mut result = buffer;
+    fn handle_file<F>(
+        &self,
+        from: &mut dyn SeekReadable,
+        to: &mut dyn std::io::Write,
+        handler: F,
+    ) -> Result<(), std::io::Error>
+    where
+        F: FnOnce(&[u8; 1024]) -> [u8; 1024],
+    {
+        let mut header = [0u8; 1024];
 
-        for (i, &mapped_index) in self.scramble_table.iter().enumerate() {
-            result[i] = buffer[mapped_index] ^ self.content_key[i % self.content_key.len()]
-        }
+        from.seek(SeekFrom::Start(0))?;
 
-        result
+        from.read_exact(&mut header)?;
+
+        let header = handler(&header);
+        to.write_all(&header)?;
+
+        std::io::copy(from, to)?;
+
+        Ok(())
     }
 }
 
@@ -43,20 +101,8 @@ impl<const KEY_SIZE: usize> Decryptor for XmlyCrypto<KEY_SIZE> {
         from: &mut dyn SeekReadable,
         to: &mut dyn std::io::Write,
     ) -> Result<(), DecryptorError> {
-        let mut header = [0u8; 1024];
-
-        from.seek(SeekFrom::Start(0))
-            .or(Err(DecryptorError::IOError))?;
-
-        from.read_exact(&mut header)
-            .or(Err(DecryptorError::IOError))?;
-
-        let header = self.decrypt_header(&header);
-        to.write_all(&header).or(Err(DecryptorError::IOError))?;
-
-        std::io::copy(from, to).or(Err(DecryptorError::IOError))?;
-
-        Ok(())
+        self.handle_file(from, to, |header| self.decrypt_header(header))
+            .or(Err(DecryptorError::IOError))
     }
 }
 
@@ -66,8 +112,8 @@ pub type X3M = XmlyCrypto<32>;
 pub fn new_from_key(
     key: &[u8],
     scramble_table: &[usize; 1024],
-) -> Result<Box<dyn Decryptor>, DecryptorError> {
-    let decryptor: Box<dyn Decryptor> = match key.len() {
+) -> Result<Box<dyn XmlyCryptoImpl>, DecryptorError> {
+    let decryptor: Box<dyn XmlyCryptoImpl> = match key.len() {
         4 => {
             let mut buffer = [0u8; 4];
             buffer.copy_from_slice(key);
