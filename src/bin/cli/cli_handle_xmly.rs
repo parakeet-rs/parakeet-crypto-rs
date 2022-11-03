@@ -5,7 +5,7 @@ use parakeet_crypto::ximalaya;
 
 use super::{
     logger::CliLogger,
-    utils::{CliBinaryArray, CliBinaryContent, CliFilePath, CliFriendlyDecryptionError},
+    utils::{CliBinaryContent, CliFilePath, CliFriendlyDecryptionError},
 };
 
 /// Handle x2m/x3m encryption/decryption.
@@ -14,7 +14,7 @@ use super::{
 pub struct XimalayaOptions {
     /// scramble table (u16 x 1024 items, little-endian)
     #[argh(option)]
-    scramble_table: CliBinaryArray<2048>,
+    scramble_table: CliBinaryContent,
 
     /// X2M/X3M key.
     /// 4-bytes = X2M
@@ -33,6 +33,14 @@ pub struct XimalayaOptions {
 
 pub fn cli_handle_xmly(args: XimalayaOptions) {
     let log = CliLogger::new("XMLY");
+
+    if args.scramble_table.content.len() != 2048 {
+        log.error(&format!(
+            "expecting scramble-table to have a size of 2048, got {} instead.",
+            args.scramble_table.content.len()
+        ));
+        process::exit(1);
+    }
 
     let mut scramble_table = [0usize; 1024];
     for (i, item) in scramble_table.iter_mut().enumerate() {
