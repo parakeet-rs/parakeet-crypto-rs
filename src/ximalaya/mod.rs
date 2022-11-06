@@ -1,3 +1,4 @@
 mod xmly;
+pub(self) mod xmly_crypto;
 
-pub use xmly::{new_from_key, X2M, X3M};
+pub use xmly::new_from_key;

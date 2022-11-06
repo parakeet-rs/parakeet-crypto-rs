@@ -1,6 +1,6 @@
-use std::io::SeekFrom;
+use std::io::{Read, Seek, SeekFrom, Write};
 
-use crate::interfaces::decryptor::{Decryptor, DecryptorError, SeekReadable};
+use crate::interfaces::decryptor::{Decryptor, DecryptorError};
 
 use super::{
     kgm_crypto::KGMCryptoConfig,
@@ -19,12 +19,16 @@ impl KGM {
         }
     }
 
-    pub fn encrypt(
+    pub fn encrypt<R, W>(
         &self,
         header: &mut KGMHeader,
-        from: &mut dyn SeekReadable,
-        to: &mut dyn std::io::Write,
-    ) -> Result<(), DecryptorError> {
+        from: &mut R,
+        to: &mut W,
+    ) -> Result<(), DecryptorError>
+    where
+        R: Read + Seek,
+        W: Write,
+    {
         from.seek(SeekFrom::Start(0))
             .or(Err(DecryptorError::IOError))?;
         let mut encryptor = create_kgm_encryptor(header, &self.config)?;
@@ -55,7 +59,10 @@ impl KGM {
 }
 
 impl Decryptor for KGM {
-    fn check(&self, from: &mut dyn SeekReadable) -> Result<bool, DecryptorError> {
+    fn check<R>(&self, from: &mut R) -> Result<bool, DecryptorError>
+    where
+        R: Read + Seek,
+    {
         from.seek(SeekFrom::Start(0))
             .or(Err(DecryptorError::IOError))?;
 
@@ -64,11 +71,11 @@ impl Decryptor for KGM {
         create_kgm_decryptor(&header, &self.config).and(Ok(true))
     }
 
-    fn decrypt(
-        &self,
-        from: &mut dyn SeekReadable,
-        to: &mut dyn std::io::Write,
-    ) -> Result<(), DecryptorError> {
+    fn decrypt<R, W>(&self, from: &mut R, to: &mut W) -> Result<(), DecryptorError>
+    where
+        R: Read + Seek,
+        W: Write,
+    {
         from.seek(SeekFrom::Start(0))
             .or(Err(DecryptorError::IOError))?;
 

@@ -1,9 +1,6 @@
-use std::io::{SeekFrom, Write};
+use std::io::{Read, Seek, SeekFrom, Write};
 
-use crate::{
-    interfaces::decryptor::{DecryptorError, SeekReadable},
-    utils::rc4_qmc2::RC4QMC2,
-};
+use crate::{interfaces::decryptor::DecryptorError, utils::rc4_qmc2::RC4QMC2};
 
 use super::key_utils::{calculate_key_hash, get_segment_key};
 
@@ -55,12 +52,16 @@ impl QMC2RC4 {
     }
 }
 
-pub fn decrypt_rc4(
+pub fn decrypt_rc4<R, W>(
     embed_key: &[u8],
     trim_right: usize,
-    from: &mut dyn SeekReadable,
-    to: &mut dyn Write,
-) -> Result<(), DecryptorError> {
+    from: &mut R,
+    to: &mut W,
+) -> Result<(), DecryptorError>
+where
+    R: Read + Seek,
+    W: Write,
+{
     let decryptor = QMC2RC4::new(embed_key);
 
     // Detect file size.

@@ -1,18 +1,23 @@
-use std::io::{SeekFrom, Write};
+use std::io::{Read, Seek, SeekFrom, Write};
 
-use crate::interfaces::decryptor::{DecryptorError, SeekReadable};
+use crate::interfaces::decryptor::DecryptorError;
 
 pub trait QMCLegacyBlockDecryptor {
     fn decrypt_block(&self, block: &mut [u8], offset: usize);
 }
 
 #[inline]
-pub fn qmc_legacy_decrypt_stream<D: QMCLegacyBlockDecryptor>(
+pub fn qmc_legacy_decrypt_stream<D, R, W>(
     trim_right: usize,
     decryptor: &D,
-    from: &mut dyn SeekReadable,
-    to: &mut dyn Write,
-) -> Result<(), DecryptorError> {
+    from: &mut R,
+    to: &mut W,
+) -> Result<(), DecryptorError>
+where
+    D: QMCLegacyBlockDecryptor,
+    R: Read + Seek,
+    W: Write,
+{
     // Detect file size.
     let mut bytes_left = from
         .seek(SeekFrom::End(-(trim_right as i64)))

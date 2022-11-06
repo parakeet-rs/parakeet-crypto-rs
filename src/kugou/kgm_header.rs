@@ -1,8 +1,6 @@
-use std::io::Cursor;
+use std::io::{Cursor, Read};
 
 use byteorder::{LittleEndian, ReadBytesExt};
-
-use crate::interfaces::decryptor::SeekReadable;
 
 pub struct KGMHeader {
     pub magic: [u8; 16],
@@ -14,8 +12,10 @@ pub struct KGMHeader {
 }
 
 impl KGMHeader {
-    // FIXME: Why can't I use "dyn Read" here?
-    pub fn from_reader(reader: &mut dyn SeekReadable) -> std::io::Result<Self> {
+    pub fn from_reader<R>(reader: &mut R) -> std::io::Result<Self>
+    where
+        R: Read,
+    {
         let mut magic = [0u8; 16];
         let mut decryptor_test_data = [0u8; 16];
         let mut file_key = [0u8; 16];

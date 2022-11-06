@@ -1,6 +1,6 @@
-use crate::interfaces::decryptor::{DecryptorError, SeekReadable};
+use crate::interfaces::decryptor::DecryptorError;
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt};
-use std::io::SeekFrom;
+use std::io::{Read, Seek, SeekFrom};
 use std::str;
 
 use super::key_utils::make_simple_key;
@@ -51,10 +51,10 @@ impl QMCFooterParser {
         self.enc_v2_key_stage2 = key;
     }
 
-    pub fn parse(
-        &self,
-        input: &mut dyn SeekReadable,
-    ) -> Result<(usize, Box<[u8]>), DecryptorError> {
+    pub fn parse<R>(&self, input: &mut R) -> Result<(usize, Box<[u8]>), DecryptorError>
+    where
+        R: Read + Seek,
+    {
         input
             .seek(SeekFrom::End(-4))
             .or(Err(DecryptorError::IOError))?;

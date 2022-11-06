@@ -1,6 +1,6 @@
-use std::io::Write;
+use std::io::{Read, Seek, Write};
 
-use crate::interfaces::decryptor::{DecryptorError, SeekReadable};
+use crate::interfaces::decryptor::DecryptorError;
 
 use super::{
     key_utils::init_qmc_static_map_table,
@@ -53,12 +53,16 @@ impl QMCLegacyBlockDecryptor for QMC2Map<'_> {
     }
 }
 
-pub fn decrypt_map(
+pub fn decrypt_map<R, W>(
     embed_key: &[u8],
     trim_right: usize,
-    from: &mut dyn SeekReadable,
-    to: &mut dyn Write,
-) -> Result<(), DecryptorError> {
+    from: &mut R,
+    to: &mut W,
+) -> Result<(), DecryptorError>
+where
+    R: Read + Seek,
+    W: Write,
+{
     let decryptor = QMC2Map::new(embed_key);
 
     qmc_legacy_decrypt_stream(trim_right, &decryptor, from, to)

@@ -1,5 +1,5 @@
-use crate::interfaces::decryptor::{Decryptor, DecryptorError, SeekReadable};
-use std::io::Write;
+use crate::interfaces::decryptor::{Decryptor, DecryptorError};
+use std::io::{Read, Seek, Write};
 
 use super::{
     key_utils::init_qmc_static_map_table,
@@ -46,17 +46,20 @@ impl QMCLegacyBlockDecryptor for QMC1 {
 }
 
 impl Decryptor for QMC1 {
-    fn check(&self, _from: &mut dyn SeekReadable) -> Result<bool, DecryptorError> {
+    fn check<R>(&self, _from: &mut R) -> Result<bool, DecryptorError>
+    where
+        R: Read + Seek,
+    {
         Ok(true)
 
         // TODO: Check for header after decrypting?
     }
 
-    fn decrypt(
-        &self,
-        from: &mut dyn SeekReadable,
-        to: &mut dyn Write,
-    ) -> Result<(), DecryptorError> {
+    fn decrypt<R, W>(&self, from: &mut R, to: &mut W) -> Result<(), DecryptorError>
+    where
+        R: Read + Seek,
+        W: Write,
+    {
         qmc_legacy_decrypt_stream(0, self, from, to)
     }
 }

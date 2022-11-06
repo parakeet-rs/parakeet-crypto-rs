@@ -1,6 +1,6 @@
 use super::qmc2_footer_parser::QMCFooterParser;
-use crate::interfaces::decryptor::{Decryptor, DecryptorError, SeekReadable};
-use std::io::Write;
+use crate::interfaces::decryptor::{Decryptor, DecryptorError};
+use std::io::{Read, Seek, Write};
 
 /// QMC2 decryptor for
 pub struct QMC2 {
@@ -14,15 +14,18 @@ impl QMC2 {
 }
 
 impl Decryptor for QMC2 {
-    fn check(&self, from: &mut dyn SeekReadable) -> Result<bool, DecryptorError> {
+    fn check<R>(&self, from: &mut R) -> Result<bool, DecryptorError>
+    where
+        R: Read + Seek,
+    {
         self.parser.parse(from).and(Ok(true))
     }
 
-    fn decrypt(
-        &self,
-        from: &mut dyn SeekReadable,
-        to: &mut dyn Write,
-    ) -> Result<(), DecryptorError> {
+    fn decrypt<R, W>(&self, from: &mut R, to: &mut W) -> Result<(), DecryptorError>
+    where
+        R: Read + Seek,
+        W: Write,
+    {
         let (trim_right, embed_key) = self.parser.parse(from)?;
 
         if embed_key.len() <= 300 {
