@@ -1,52 +1,17 @@
-use std::io::{Read, Seek, Write};
+use crate::interfaces::decryptor::DecryptorError;
 
-use crate::interfaces::decryptor::{Decryptor, DecryptorError};
-
-use super::xmly_crypto::{process_ximalaya_file, XimalayaCrypto};
-
-#[derive(Debug, Clone, Copy)]
-pub struct XimalayaDecryptor {
-    crypto: XimalayaCrypto,
-}
-
-impl XimalayaDecryptor {
-    pub fn new(content_key: &[u8; 32], scramble_table: &[usize; 1024]) -> Self {
-        Self {
-            crypto: XimalayaCrypto::new(content_key, scramble_table),
-        }
-    }
-}
-
-impl Decryptor for XimalayaDecryptor {
-    fn check<R>(&self, _from: &mut R) -> Result<bool, DecryptorError>
-    where
-        R: Read + Seek,
-    {
-        // TODO: Verify decrypted header after implementing AudioHeader checker.
-        Ok(true)
-    }
-
-    fn decrypt<R, W>(&self, from: &mut R, to: &mut W) -> Result<(), DecryptorError>
-    where
-        R: Read + Seek,
-        W: Write,
-    {
-        process_ximalaya_file(from, to, |header| self.crypto.decrypt_header(header))
-            .or(Err(DecryptorError::IOError))
-    }
-}
+use super::xmly_crypto::XimalayaCrypto;
 
 pub fn new_from_key(
     key: &[u8],
     scramble_table: &[usize; 1024],
-) -> Result<Box<dyn Decryptor>, DecryptorError> {
-    // FIXME: This type is broken.
+) -> Result<XimalayaCrypto, DecryptorError> {
     let mut key_final = [0u8; 32];
 
     match key.len() {
         4 => {
             for i in (0..32).step_by(4) {
-                &key_final[i..i + 4].copy_from_slice(key);
+                key_final[i..i + 4].copy_from_slice(key);
             }
         }
 
@@ -57,13 +22,13 @@ pub fn new_from_key(
         _ => return Err(DecryptorError::XimalayaCountNotFindImplementation),
     };
 
-    let decryptor: Box<dyn Decryptor> =
-        Box::from(XimalayaDecryptor::new(&key_final, scramble_table));
-    Ok(decryptor)
+    Ok(XimalayaCrypto::new(&key_final, scramble_table))
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::interfaces::decryptor::Decryptor;
+
     use std::{
         fs::{self, File},
         path::PathBuf,

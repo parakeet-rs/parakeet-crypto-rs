@@ -1,7 +1,7 @@
 use std::{fs::File, process};
 
 use argh::FromArgs;
-use parakeet_crypto::ximalaya;
+use parakeet_crypto::{interfaces::decryptor::Decryptor, ximalaya};
 
 use super::{
     logger::CliLogger,

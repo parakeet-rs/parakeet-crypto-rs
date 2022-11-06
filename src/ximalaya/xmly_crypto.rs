@@ -1,5 +1,7 @@
 use std::io::{Read, Seek, SeekFrom, Write};
 
+use crate::interfaces::decryptor::{Decryptor, DecryptorError};
+
 #[derive(Debug, Clone, Copy)]
 pub struct XimalayaCrypto {
     content_key: [u8; 32],
@@ -36,7 +38,7 @@ impl XimalayaCrypto {
         }
     }
 
-    fn decrypt_header(&self, encrypted: &[u8; 1024]) -> [u8; 1024] {
+    pub fn decrypt_header(&self, encrypted: &[u8; 1024]) -> [u8; 1024] {
         let mut decrypted = *encrypted;
 
         for (di, &ei) in self.scramble_table.iter().enumerate() {
@@ -47,7 +49,7 @@ impl XimalayaCrypto {
         decrypted
     }
 
-    fn encrypt_header(&self, decrypted: &[u8; 1024]) -> [u8; 1024] {
+    pub fn encrypt_header(&self, decrypted: &[u8; 1024]) -> [u8; 1024] {
         let mut encrypted = *decrypted;
         let reverse_scramble_table = self.scramble_table;
 
@@ -57,5 +59,33 @@ impl XimalayaCrypto {
         }
 
         encrypted
+    }
+
+    pub fn encrypt<R, W>(&self, from: &mut R, to: &mut W) -> Result<(), DecryptorError>
+    where
+        R: Read + Seek,
+        W: Write,
+    {
+        process_ximalaya_file(from, to, |header| self.encrypt_header(header))
+            .or(Err(DecryptorError::IOError))
+    }
+}
+
+impl Decryptor for XimalayaCrypto {
+    fn check<R>(&self, _from: &mut R) -> Result<bool, DecryptorError>
+    where
+        R: Read + Seek,
+    {
+        // TODO: Verify decrypted header after implementing AudioHeader checker.
+        Ok(true)
+    }
+
+    fn decrypt<R, W>(&self, from: &mut R, to: &mut W) -> Result<(), DecryptorError>
+    where
+        R: Read + Seek,
+        W: Write,
+    {
+        process_ximalaya_file(from, to, |header| self.decrypt_header(header))
+            .or(Err(DecryptorError::IOError))
     }
 }
