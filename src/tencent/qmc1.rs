@@ -46,13 +46,13 @@ impl QMCLegacyBlockDecryptor for QMC1 {
 }
 
 impl Decryptor for QMC1 {
-    fn check<R>(&self, _from: &mut R) -> Result<bool, DecryptorError>
+    fn check<R>(&self, _from: &mut R) -> Result<(), DecryptorError>
     where
         R: Read + Seek,
     {
-        Ok(true)
-
         // TODO: Check for header after decrypting?
+
+        Ok(())
     }
 
     fn decrypt<R, W>(&self, from: &mut R, to: &mut W) -> Result<(), DecryptorError>

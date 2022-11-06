@@ -72,12 +72,12 @@ impl XimalayaCrypto {
 }
 
 impl Decryptor for XimalayaCrypto {
-    fn check<R>(&self, _from: &mut R) -> Result<bool, DecryptorError>
+    fn check<R>(&self, _from: &mut R) -> Result<(), DecryptorError>
     where
         R: Read + Seek,
     {
         // TODO: Verify decrypted header after implementing AudioHeader checker.
-        Ok(true)
+        Ok(())
     }
 
     fn decrypt<R, W>(&self, from: &mut R, to: &mut W) -> Result<(), DecryptorError>

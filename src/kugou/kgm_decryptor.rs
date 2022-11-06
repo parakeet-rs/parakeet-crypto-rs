@@ -59,7 +59,7 @@ impl KGM {
 }
 
 impl Decryptor for KGM {
-    fn check<R>(&self, from: &mut R) -> Result<bool, DecryptorError>
+    fn check<R>(&self, from: &mut R) -> Result<(), DecryptorError>
     where
         R: Read + Seek,
     {
@@ -68,7 +68,7 @@ impl Decryptor for KGM {
 
         let header = KGMHeader::from_reader(from).or(Err(DecryptorError::IOError))?;
 
-        create_kgm_decryptor(&header, &self.config).and(Ok(true))
+        create_kgm_decryptor(&header, &self.config).and(Ok(()))
     }
 
     fn decrypt<R, W>(&self, from: &mut R, to: &mut W) -> Result<(), DecryptorError>

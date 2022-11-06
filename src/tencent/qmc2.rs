@@ -14,11 +14,11 @@ impl QMC2 {
 }
 
 impl Decryptor for QMC2 {
-    fn check<R>(&self, from: &mut R) -> Result<bool, DecryptorError>
+    fn check<R>(&self, from: &mut R) -> Result<(), DecryptorError>
     where
         R: Read + Seek,
     {
-        self.parser.parse(from).and(Ok(true))
+        self.parser.parse(from).and(Ok(()))
     }
 
     fn decrypt<R, W>(&self, from: &mut R, to: &mut W) -> Result<(), DecryptorError>

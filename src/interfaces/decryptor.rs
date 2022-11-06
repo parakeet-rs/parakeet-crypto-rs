@@ -23,7 +23,7 @@ pub enum DecryptorError {
 }
 
 pub trait Decryptor {
-    fn check<R>(&self, from: &mut R) -> Result<bool, DecryptorError>
+    fn check<R>(&self, from: &mut R) -> Result<(), DecryptorError>
     where
         R: Read + Seek;
 
