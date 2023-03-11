@@ -108,7 +108,7 @@ pub const KEY_COMPRESSION: [u8; 48] = {
 
     let mut i = 0;
     while i < 24 {
-        result[i] = result[i] - 1;
+        result[i] -= 1;
         i += 1;
     }
     while i < 48 {
