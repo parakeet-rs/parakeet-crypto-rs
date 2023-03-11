@@ -9,11 +9,11 @@ pub struct Des {
 }
 
 fn des_ip(data: u64) -> u64 {
-    int_helper::map_u64_bits(data, &data::IP)
+    int_helper::map_u64(data, &data::IP)
 }
 
 fn des_ip_inv(data: u64) -> u64 {
-    int_helper::map_u64_bits(data, &data::IP_INV)
+    int_helper::map_u64(data, &data::IP_INV)
 }
 
 fn sbox_transform(state: u64) -> u32 {
@@ -28,16 +28,14 @@ fn sbox_transform(state: u64) -> u32 {
         })
 }
 
-fn des_crypt_proc(state: u64, key: &u64) -> u64 {
+fn des_crypt_proc(state: u64, key: u64) -> u64 {
     let mut state = state;
     let state_hi32 = int_helper::u64_get_hi32(state);
     let state_lo32 = int_helper::u64_get_lo32(state);
 
-    state = int_helper::map_2_u32_bits_to_u64(
-        state_hi32,
-        &data::KEY_EXPANSION_PART1,
-        state_hi32,
-        &data::KEY_EXPANSION_PART2,
+    state = int_helper::map_u64(
+        int_helper::make_u64(state_hi32, state_hi32),
+        &data::KEY_EXPANSION,
     );
     state ^= key;
 
@@ -61,29 +59,35 @@ impl Des {
     pub fn set_key(&mut self, key: &[u8; 8]) {
         let key = u64::from_le_bytes(*key);
 
-        let mut param_c = int_helper::map_u64_to_u32_bits(key, &data::KEY_PERMUTATION_C);
-        let mut param_d = int_helper::map_u64_to_u32_bits(key, &data::KEY_PERMUTATION_D);
+        let param = int_helper::map_u64(key, &data::KEY_PERMUTATION_TABLE);
+        let mut param_c = int_helper::u64_get_lo32(param);
+        let mut param_d = int_helper::u64_get_hi32(param);
+
+        let update_param = |param: &mut u32, shift_left: u8| {
+            let shift_right = 28 - shift_left;
+            *param = (*param << shift_left) | ((*param >> shift_right) & 0xFFFFFFF0);
+        };
 
         for (subkey, shift_left) in self.subkeys.iter_mut().zip(data::KEY_RND_SHIFTS) {
-            let shift_right = 28 - shift_left;
-            param_c = (param_c << shift_left) | ((param_c >> shift_right) & 0xFFFFFFF0); // rotate 28 bit int
-            param_d = (param_d << shift_left) | ((param_d >> shift_right) & 0xFFFFFFF0);
-            *subkey = int_helper::map_2_u32_bits_to_u64(
-                param_c,
-                &data::KEY_COMPRESSION_PART1,
-                param_d,
-                &data::KEY_COMPRESSION_PART2,
-            );
+            update_param(&mut param_c, shift_left);
+            update_param(&mut param_d, shift_left);
+
+            let key = int_helper::make_u64(param_d, param_c);
+            *subkey = int_helper::map_u64(key, &data::KEY_COMPRESSION);
         }
     }
 
     pub fn crypt_block<const IS_ENCRYPT: bool>(&self, data: u64) -> u64 {
         let mut state = des_ip(data);
 
-        state = if IS_ENCRYPT {
-            self.subkeys.iter().rev().fold(state, des_crypt_proc)
+        if IS_ENCRYPT {
+            self.subkeys.iter().rev().for_each(|&key| {
+                state = des_crypt_proc(state, key);
+            })
         } else {
-            self.subkeys.iter().fold(state, des_crypt_proc)
+            self.subkeys.iter().for_each(|&key| {
+                state = des_crypt_proc(state, key);
+            })
         };
 
         // Swap data hi32/lo32
@@ -97,8 +101,7 @@ impl Des {
 
     pub fn crypt_block_bytes<const IS_ENCRYPT: bool>(&self, data: &mut [u8]) -> Option<()> {
         if data.len() % 8 == 0 {
-            for i in (0..data.len()).step_by(8) {
-                let block = &mut data[i..i + 8];
+            for block in data.chunks_exact_mut(8) {
                 let value = u64::from_le_bytes(block.try_into().unwrap());
                 let transformed = self.crypt_block::<IS_ENCRYPT>(value);
                 block.copy_from_slice(&transformed.to_le_bytes());
