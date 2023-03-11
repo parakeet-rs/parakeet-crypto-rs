@@ -20,9 +20,6 @@ jobs:
       matrix:
         os: ["ubuntu-22.04", "windows-2022"]
         target_arch: ["x86_64", "i686"]
-        exclude:
-          - os: ubuntu-22.04
-            target_arch: i686
         include:
           - os: ubuntu-22.04
             target_suffix: unknown-linux-gnu
@@ -42,7 +39,7 @@ jobs:
           ~/.cargo/git/db/
           target/
         key: ${{ matrix.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-    - uses: actions-rs/toolchain@v1
+    - uses: actions-rs/toolchain@v1.0.6
       with:
         toolchain: stable
         target: "${{ matrix.target_arch }}-${{ matrix.target_suffix }}"
