@@ -57,7 +57,7 @@ jobs:
         key: ${{ matrix.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
     - name: install gcc-multilib
       shell: bash
-      if: "${{ startsWith(matrix.os, 'ubuntu') && target_arch == 'i686' }}"
+      if: "${{ startsWith(matrix.os, 'ubuntu') && matrix.target_arch == 'i686' }}"
       run: sudo apt install gcc-multilib -y
     - name: Setup rust environment
       shell: bash
