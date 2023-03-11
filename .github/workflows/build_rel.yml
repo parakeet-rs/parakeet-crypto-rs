@@ -15,12 +15,12 @@ jobs:
       fail-fast: true
       matrix:
         os: ["ubuntu-22.04", "windows-2022"]
-        target-arch: ["x86_64", "i686"]
+        target_arch: ["x86_64", "i686"]
         include:
           - os: ubuntu-22.04
-            target-suffix: unknown-linux-gnu
+            target_suffix: unknown-linux-gnu
           - os: windows-2022
-            target-suffix: pc-windows-msvc
+            target_suffix: pc-windows-msvc
 
     runs-on: "${{ matrix.os }}"
 
@@ -28,4 +28,4 @@ jobs:
     - uses: actions/checkout@v3
     - name: Build
       shell: bash
-      run: cargo build --target "${target-arch}-${target-suffix}" --release --verbose
+      run: cargo build --target "${target_arch}-${target_suffix}" --release --verbose
