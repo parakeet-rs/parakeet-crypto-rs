@@ -13,6 +13,7 @@ jobs:
   build:
     strategy:
       fail-fast: true
+      max-parallel: 2
       matrix:
         os: ["ubuntu-22.04", "windows-2022"]
         target_arch: ["x86_64", "i686"]
@@ -28,4 +29,4 @@ jobs:
     - uses: actions/checkout@v3
     - name: Build
       shell: bash
-      run: cargo build --target "${target_arch}-${target_suffix}" --release --verbose
+      run: cargo build --target "${{ matrix.target_arch }}-${{ matrix.target_suffix }}" --release --verbose
