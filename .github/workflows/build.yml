@@ -20,6 +20,9 @@ jobs:
       matrix:
         os: ["ubuntu-22.04", "windows-2022"]
         target_arch: ["x86_64", "i686"]
+        exclude:
+          - os: ubuntu-22.04
+            target_arch: i686
         include:
           - os: ubuntu-22.04
             target_suffix: unknown-linux-gnu
@@ -42,10 +45,12 @@ jobs:
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
-        components: rustfmt, clippy
+        target: "${{ matrix.target_arch }}-${{ matrix.target_suffix }}"
+        override: true
+        components: clippy
     - name: Lint rust code
       run: cargo clippy -- -D warnings
-    - name: Attempt to build (debug)
-      run: cargo build --target "${{ matrix.target_arch }}-${{ matrix.target_suffix }}" --verbose
-    - name: Build & Test
-      run: cargo test --target "${{ matrix.target_arch }}-${{ matrix.target_suffix }}" --verbose
+    - name: Test
+      run: cargo test --verbose
+    - name: Build for release
+      run: cargo build --release --verbose
