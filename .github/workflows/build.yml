@@ -49,6 +49,7 @@ jobs:
     - name: Setup rust environment
       shell: bash
       run: |
+        set -ex
         rustup show
         rustup -V
         rustup target add "${{ matrix.target_arch }}-${{ matrix.target_suffix }}"
