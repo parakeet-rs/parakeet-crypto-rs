@@ -1,6 +1,12 @@
 use super::{data, int_helper};
+use itertools::Either;
 
 type DesSubkeys = [u64; 16];
+
+pub enum DESMode {
+    Encrypt,
+    Decrypt,
+}
 
 /// QRC's modified DES implementation
 #[derive(Debug, Default, Clone, Copy)]
@@ -50,13 +56,13 @@ fn des_crypt_proc(state: u64, key: u64) -> u64 {
 }
 
 impl Des {
-    pub fn new(key: &[u8; 8]) -> Self {
+    pub fn new(key: &[u8; 8], mode: DESMode) -> Self {
         let mut result = Self::default();
-        result.set_key(key);
+        result.set_key(key, mode);
         result
     }
 
-    pub fn set_key(&mut self, key: &[u8; 8]) {
+    pub fn set_key(&mut self, key: &[u8; 8], mode: DESMode) {
         let key = u64::from_le_bytes(*key);
 
         let param = int_helper::map_u64(key, &data::KEY_PERMUTATION_TABLE);
@@ -68,7 +74,12 @@ impl Des {
             *param = (*param << shift_left) | ((*param >> shift_right) & 0xFFFFFFF0);
         };
 
-        for (subkey, shift_left) in self.subkeys.iter_mut().zip(data::KEY_RND_SHIFTS) {
+        let subkeys = match mode {
+            DESMode::Encrypt => Either::Left(self.subkeys.iter_mut().rev()),
+            DESMode::Decrypt => Either::Right(self.subkeys.iter_mut()),
+        };
+
+        for (subkey, shift_left) in subkeys.zip(data::KEY_RND_SHIFTS) {
             update_param(&mut param_c, shift_left);
             update_param(&mut param_d, shift_left);
 
@@ -77,18 +88,13 @@ impl Des {
         }
     }
 
-    pub fn crypt_block<const IS_ENCRYPT: bool>(&self, data: u64) -> u64 {
+    pub fn transform_block(&self, data: u64) -> u64 {
         let mut state = des_ip(data);
 
-        if IS_ENCRYPT {
-            self.subkeys.iter().rev().for_each(|&key| {
-                state = des_crypt_proc(state, key);
-            })
-        } else {
-            self.subkeys.iter().for_each(|&key| {
-                state = des_crypt_proc(state, key);
-            })
-        };
+        state = self
+            .subkeys
+            .iter()
+            .fold(state, |state, &key| des_crypt_proc(state, key));
 
         // Swap data hi32/lo32
         state = int_helper::swap_u64_side(state);
@@ -99,25 +105,17 @@ impl Des {
         state
     }
 
-    pub fn crypt_block_bytes<const IS_ENCRYPT: bool>(&self, data: &mut [u8]) -> Option<()> {
+    pub fn transform_bytes(&self, data: &mut [u8]) -> Option<()> {
         if data.len() % 8 == 0 {
             for block in data.chunks_exact_mut(8) {
                 let value = u64::from_le_bytes(block.try_into().unwrap());
-                let transformed = self.crypt_block::<IS_ENCRYPT>(value);
+                let transformed = self.transform_block(value);
                 block.copy_from_slice(&transformed.to_le_bytes());
             }
             Some(())
         } else {
             None
         }
-    }
-
-    pub fn encrypt_bytes(&self, data: &mut [u8]) -> Option<()> {
-        self.crypt_block_bytes::<true>(data)
-    }
-
-    pub fn decrypt_bytes(&self, data: &mut [u8]) -> Option<()> {
-        self.crypt_block_bytes::<false>(data)
     }
 }
 
@@ -129,8 +127,8 @@ fn test_des_encrypt() {
         0x77, 0x63, 0x3B, 0x02, 0x45, 0x4E, 0x70, 0x7A, //
     ];
 
-    let des = Des::new(b"TEST!KEY");
-    des.encrypt_bytes(&mut input).unwrap();
+    let des = Des::new(b"TEST!KEY", DESMode::Encrypt);
+    des.transform_bytes(&mut input).unwrap();
     assert_eq!(input, expected_data);
 }
 
@@ -142,7 +140,7 @@ fn test_des_decrypt() {
     ];
     let expected_data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6];
 
-    let des = Des::new(b"TEST!KEY");
-    des.decrypt_bytes(&mut input).unwrap();
+    let des = Des::new(b"TEST!KEY", DESMode::Decrypt);
+    des.transform_bytes(&mut input).unwrap();
     assert_eq!(input, expected_data);
 }
