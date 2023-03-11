@@ -13,22 +13,6 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
-  lint:
-    strategy:
-      fail-fast: true
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@v3
-    - name: Setup rust environment
-      shell: bash
-      run: |
-        rustup show
-        rustup -V
-        rustup component add clippy
-        rustup show
-    - name: Lint
-      run: cargo clippy -- -D warnings
-
   test_and_build:
     strategy:
       fail-fast: true
@@ -53,12 +37,15 @@ jobs:
           ~/.cargo/registry/index/
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
-          target/
-        key: ${{ matrix.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
-    - name: install gcc-multilib
+        key: ${{ matrix.os }}-${{ matrix.arch }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+    - name: "Ubuntu: install gcc-multilib"
       shell: bash
       if: "${{ startsWith(matrix.os, 'ubuntu') && matrix.target_arch == 'i686' }}"
       run: sudo apt install gcc-multilib -y
+    - name: Lint
+      shell: bash
+      if: "${{ startsWith(matrix.os, 'ubuntu') && matrix.target_arch == 'x86_64' }}"
+      run: cargo clippy -- -D warnings
     - name: Setup rust environment
       shell: bash
       run: |
