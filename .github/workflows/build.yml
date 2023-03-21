@@ -1,0 +1,62 @@
+name: Rust (Build & Test)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  # 可手动执行action
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  test_and_build:
+    strategy:
+      fail-fast: true
+      max-parallel: 2
+      matrix:
+        os: ["ubuntu-22.04", "windows-2022"]
+        target_arch: ["x86_64", "i686"]
+        include:
+          - os: ubuntu-22.04
+            target_suffix: unknown-linux-gnu
+          - os: windows-2022
+            target_suffix: pc-windows-msvc
+
+    runs-on: "${{ matrix.os }}"
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+        key: ${{ matrix.os }}-${{ matrix.arch }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+    - name: "Ubuntu: install gcc-multilib"
+      shell: bash
+      if: "${{ startsWith(matrix.os, 'ubuntu') && matrix.target_arch == 'i686' }}"
+      run: sudo apt install gcc-multilib -y
+    - name: Lint
+      shell: bash
+      if: "${{ startsWith(matrix.os, 'ubuntu') && matrix.target_arch == 'x86_64' }}"
+      run: cargo clippy -- -D warnings
+    - name: Setup rust environment
+      shell: bash
+      run: |
+        set -ex
+        rustup show
+        rustup -V
+        rustup target add "${{ matrix.target_arch }}-${{ matrix.target_suffix }}"
+        rustup toolchain install "stable-${{ matrix.target_arch }}-${{ matrix.target_suffix }}" --component clippy
+        rustup default "stable-${{ matrix.target_arch }}-${{ matrix.target_suffix }}"
+        rustup show
+    - name: Test
+      run: cargo test --verbose
+    - name: Build for release
+      run: cargo build --release --verbose

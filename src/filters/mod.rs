@@ -15,5 +15,7 @@ pub use qmc2_map::QMC2Map;
 mod qmc2_rc4;
 pub use qmc2_rc4::QMC2RC4;
 
+mod qrc;
+
 mod ximalaya;
 pub use ximalaya::{create_scramble_key, XimalayaCrypto, XimalayaReader, SCRAMBLE_HEADER_LEN};

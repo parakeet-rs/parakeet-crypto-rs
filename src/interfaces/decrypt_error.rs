@@ -31,6 +31,8 @@ pub enum DecryptorError {
     Base64DecodeError(#[from] DecodeError),
     #[error("TEA key error (is your key correct?)")]
     TEADecryptError,
+    #[error("Input stream does not have a block size of 8.")]
+    QrcDesblockAlignment,
 
     #[error("invalid kugou key slot: {0}")]
     KGMInvalidKeySlotError(u32),
