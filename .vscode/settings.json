@@ -14,5 +14,8 @@
         "ximalaya",
         "Xmly"
     ],
-    "python.formatting.provider": "yapf"
+    "python.formatting.provider": "yapf",
+    "rust-analyzer.cargo.features": [
+        "test-local"
+    ]
 }
