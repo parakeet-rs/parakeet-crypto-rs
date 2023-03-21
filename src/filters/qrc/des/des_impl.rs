@@ -75,8 +75,8 @@ impl Des {
         };
 
         let subkeys = match mode {
-            DESMode::Encrypt => Either::Left(self.subkeys.iter_mut().rev()),
-            DESMode::Decrypt => Either::Right(self.subkeys.iter_mut()),
+            DESMode::Decrypt => Either::Left(self.subkeys.iter_mut().rev()),
+            DESMode::Encrypt => Either::Right(self.subkeys.iter_mut()),
         };
 
         for (subkey, shift_left) in subkeys.zip(data::KEY_RND_SHIFTS) {
@@ -120,27 +120,29 @@ impl Des {
 }
 
 #[test]
-fn test_des_encrypt() {
+fn test_des_decrypt() {
     let mut input = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6];
     let expected_data = [
         0xFD, 0x0E, 0x64, 0x06, 0x65, 0xBE, 0x74, 0x13, //
         0x77, 0x63, 0x3B, 0x02, 0x45, 0x4E, 0x70, 0x7A, //
     ];
 
-    let des = Des::new(b"TEST!KEY", DESMode::Encrypt);
+    let des = Des::new(b"TEST!KEY", DESMode::Decrypt);
     des.transform_bytes(&mut input).unwrap();
     assert_eq!(input, expected_data);
 }
 
 #[test]
-fn test_des_decrypt() {
+fn test_des_encrypt() {
     let mut input = [
         0xFD, 0x0E, 0x64, 0x06, 0x65, 0xBE, 0x74, 0x13, //
         0x77, 0x63, 0x3B, 0x02, 0x45, 0x4E, 0x70, 0x7A, //
     ];
     let expected_data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6];
 
-    let des = Des::new(b"TEST!KEY", DESMode::Decrypt);
+    let des = Des::new(b"TEST!KEY", DESMode::Encrypt);
     des.transform_bytes(&mut input).unwrap();
+    use pretty_hex::PrettyHex;
+    println!("{:?}", expected_data.hex_dump());
     assert_eq!(input, expected_data);
 }
