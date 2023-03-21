@@ -12,3 +12,6 @@ pub use loop_iterator::LoopIter;
 
 mod loop_peek_iter;
 pub use loop_peek_iter::PeekIter;
+
+mod sized_buffer;
+pub use sized_buffer::SizedBuffer;

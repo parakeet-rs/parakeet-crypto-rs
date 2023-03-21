@@ -2,19 +2,19 @@ use std::io::{ErrorKind, Read};
 
 use super::QMC1Static;
 
-pub struct QMC1StaticReader<'a, R>
+pub struct QMC1StaticReader<R>
 where
     R: Read,
 {
     crypto: QMC1Static,
-    reader: &'a mut R,
+    reader: R,
 }
 
-impl<'a, R> QMC1StaticReader<'a, R>
+impl<R> QMC1StaticReader<R>
 where
     R: Read,
 {
-    pub fn new(crypto: QMC1Static, prev_reader: &'a mut R) -> Self {
+    pub fn new(crypto: QMC1Static, prev_reader: R) -> Self {
         Self {
             crypto,
             reader: prev_reader,
@@ -22,7 +22,7 @@ where
     }
 }
 
-impl<R> Read for QMC1StaticReader<'_, R>
+impl<R> Read for QMC1StaticReader<R>
 where
     R: Read,
 {
